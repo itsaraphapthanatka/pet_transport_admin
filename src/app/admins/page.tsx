@@ -2,17 +2,16 @@
 
 import { useEffect, useState } from "react";
 import { Admin, adminService, CreateAdminData, UpdateAdminData } from "@/services/adminService";
-import { useAuth } from "@/context/AuthContext";
 import { useRouter } from "next/navigation";
 import Swal from "sweetalert2";
 
 export default function AdminsPage() {
-    const { user } = useAuth();
     const router = useRouter();
     const [admins, setAdmins] = useState<Admin[]>([]);
     const [loading, setLoading] = useState(true);
     const [showModal, setShowModal] = useState(false);
     const [editingAdmin, setEditingAdmin] = useState<Admin | null>(null);
+    const [user, setUser] = useState<any>(null);
 
     // Form states
     const [fullName, setFullName] = useState("");
@@ -21,18 +20,26 @@ export default function AdminsPage() {
     const [role, setRole] = useState("admin");
 
     useEffect(() => {
-        if (user && user.role !== "super_admin") {
-            Swal.fire({
-                icon: "error",
-                title: "Access Denied",
-                text: "Only Super Admins can access this page",
-            }).then(() => {
-                router.push("/dashboard");
-            });
+        const adminUser = localStorage.getItem('admin_user');
+        if (adminUser) {
+            const parsedUser = JSON.parse(adminUser);
+            setUser(parsedUser);
+            if (parsedUser.role !== "super_admin") {
+                Swal.fire({
+                    icon: "error",
+                    title: "Access Denied",
+                    text: "Only Super Admins can access this page",
+                }).then(() => {
+                    router.push("/");
+                });
+                return;
+            }
+        } else {
+            router.push("/login");
             return;
         }
         fetchAdmins();
-    }, [user, router]);
+    }, [router]);
 
     const fetchAdmins = async () => {
         try {
@@ -185,8 +192,8 @@ export default function AdminsPage() {
                                 <td className="px-6 py-4 whitespace-nowrap">
                                     <span
                                         className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${admin.role === "super_admin"
-                                                ? "bg-purple-100 text-purple-800"
-                                                : "bg-green-100 text-green-800"
+                                            ? "bg-purple-100 text-purple-800"
+                                            : "bg-green-100 text-green-800"
                                             }`}
                                     >
                                         {admin.role}

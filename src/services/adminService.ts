@@ -1,4 +1,4 @@
-import { get, post, put, del } from './api';
+import { apiFetch } from '@/lib/api';
 
 export interface Admin {
     id: number;
@@ -28,18 +28,30 @@ export interface UpdateAdminData {
 
 export const adminService = {
     getAdmins: async (skip: number = 0, limit: number = 100): Promise<Admin[]> => {
-        return get(`/admin/admins?skip=${skip}&limit=${limit}`);
+        const res = await apiFetch(`/admin/admins?skip=${skip}&limit=${limit}`);
+        return res.json();
     },
 
     createAdmin: async (data: CreateAdminData): Promise<Admin> => {
-        return post('/admin/admins', data);
+        const res = await apiFetch('/admin/admins', {
+            method: 'POST',
+            body: JSON.stringify(data),
+        });
+        return res.json();
     },
 
     updateAdmin: async (id: number, data: UpdateAdminData): Promise<Admin> => {
-        return put(`/admin/admins/${id}`, data);
+        const res = await apiFetch(`/admin/admins/${id}`, {
+            method: 'PUT',
+            body: JSON.stringify(data),
+        });
+        return res.json();
     },
 
     deleteAdmin: async (id: number): Promise<Admin> => {
-        return del(`/admin/admins/${id}`);
+        const res = await apiFetch(`/admin/admins/${id}`, {
+            method: 'DELETE',
+        });
+        return res.json();
     }
 };
