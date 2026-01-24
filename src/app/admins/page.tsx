@@ -20,6 +20,12 @@ export default function AdminsPage() {
     const [role, setRole] = useState("admin");
 
     useEffect(() => {
+        const token = localStorage.getItem('admin_token');
+        if (!token) {
+            router.push("/login");
+            return;
+        }
+
         const adminUser = localStorage.getItem('admin_user');
         if (adminUser) {
             const parsedUser = JSON.parse(adminUser);
@@ -35,8 +41,12 @@ export default function AdminsPage() {
                 return;
             }
         } else {
-            router.push("/login");
-            return;
+            // If token exists but user data is missing, we might be in an inconsistent state.
+            // Fetching admins might still work if the token is valid, but for safety, 
+            // let's try to get stats or something, or just redirect to home.
+            // For now, if we have a token but no user object, we let it try fetchAdmins
+            // but warn the user.
+            console.warn("Admin user data missing from localStorage");
         }
         fetchAdmins();
     }, [router]);

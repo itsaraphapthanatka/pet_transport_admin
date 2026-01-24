@@ -32,12 +32,12 @@ export default function LoginPage() {
                 throw new Error(data.detail || 'Login failed');
             }
 
-            if (data.role !== 'admin') {
+            if (!['admin', 'super_admin', 'moderator'].includes(data.role)) {
                 throw new Error('Only administrators can access this dashboard');
             }
 
             localStorage.setItem('admin_token', data.access_token);
-            localStorage.setItem('admin_user', JSON.stringify(data.user));
+            localStorage.setItem('admin_user', JSON.stringify(data.admin || data.user));
 
             router.push('/');
         } catch (err: any) {

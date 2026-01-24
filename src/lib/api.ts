@@ -17,6 +17,7 @@ export async function apiFetch(endpoint: string, options: RequestInit = {}) {
     if (response.status === 401) {
         if (typeof window !== 'undefined') {
             localStorage.removeItem('admin_token');
+            localStorage.removeItem('admin_user');
             window.location.href = '/login';
         }
     }
