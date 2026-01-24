@@ -17,6 +17,7 @@ import {
 import { apiFetch } from '@/lib/api';
 
 export default function SettingsPage() {
+    const [activeTab, setActiveTab] = useState('map');
     const [settings, setSettings] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
@@ -141,19 +142,19 @@ export default function SettingsPage() {
                         { id: 'notifications', label: 'Notifications', icon: Bell },
                         { id: 'api', label: 'API & External', icon: Globe },
                     ].map((item) => (
-                        <button key={item.id} style={{
+                        <button key={item.id} onClick={() => setActiveTab(item.id)} style={{
                             display: 'flex',
                             alignItems: 'center',
                             gap: '12px',
                             padding: '12px 16px',
                             borderRadius: '10px',
-                            background: item.id === 'map' ? 'white' : 'transparent',
+                            background: item.id === activeTab ? 'white' : 'transparent',
                             border: 'none',
-                            color: item.id === 'map' ? 'var(--primary)' : 'var(--text-muted)',
+                            color: item.id === activeTab ? 'var(--primary)' : 'var(--text-muted)',
                             fontWeight: '600',
                             fontSize: '14px',
                             cursor: 'pointer',
-                            boxShadow: item.id === 'map' ? '0 4px 6px -1px rgba(0,0,0,0.1)' : 'none'
+                            boxShadow: item.id === activeTab ? '0 4px 6px -1px rgba(0,0,0,0.1)' : 'none'
                         }}>
                             <item.icon size={18} />
                             {item.label}
@@ -163,104 +164,111 @@ export default function SettingsPage() {
 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
                     {/* Map Provider Configuration */}
-                    <div className="card">
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '24px' }}>
-                            <MapIcon size={20} color="var(--primary)" />
-                            <h3 style={{ fontSize: '18px', fontWeight: '700', margin: 0 }}>Map Provider Configuration</h3>
-                        </div>
-                        <p style={{ fontSize: '14px', color: 'var(--text-muted)', marginBottom: '20px' }}>
-                            Select the map service provider for routing and display across all apps (Customer, Driver, Admin).
-                        </p>
-                        <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
-                            {[
-                                { value: 'google', label: 'Google Maps', desc: 'Global coverage, accurate routing' },
-                                { value: 'here', label: 'HERE Maps', desc: 'Enterprise-grade navigation' },
-                                { value: 'longdo', label: 'Longdo Map', desc: 'Thailand-focused mapping' }
-                            ].map((option) => (
-                                <button
-                                    key={option.value}
-                                    onClick={() => handleMapProviderUpdate(option.value as any)}
-                                    disabled={loadingMap}
-                                    style={{
-                                        flex: '1 1 auto',
-                                        minWidth: '180px',
-                                        padding: '16px',
-                                        borderRadius: '12px',
-                                        border: `2px solid ${mapProvider === option.value ? 'var(--primary)' : '#e2e8f0'}`,
-                                        background: mapProvider === option.value ? '#eff6ff' : 'white',
-                                        cursor: loadingMap ? 'not-allowed' : 'pointer',
-                                        textAlign: 'left',
-                                        transition: 'all 0.2s',
-                                        opacity: loadingMap ? 0.6 : 1
-                                    }}
-                                >
-                                    <div style={{ fontSize: '14px', fontWeight: '700', color: mapProvider === option.value ? 'var(--primary)' : 'var(--text-main)', marginBottom: '4px' }}>
-                                        {option.label}
-                                    </div>
-                                    <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
-                                        {option.desc}
-                                    </div>
-                                    {mapProvider === option.value && (
-                                        <div style={{ marginTop: '8px', display: 'flex', alignItems: 'center', gap: '4px', fontSize: '12px', color: 'var(--primary)', fontWeight: '600' }}>
-                                            <CheckCircle2 size={14} />
-                                            Active
+                    {activeTab === 'map' && (
+                        <div className="card">
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '24px' }}>
+                                <MapIcon size={20} color="var(--primary)" />
+                                <h3 style={{ fontSize: '18px', fontWeight: '700', margin: 0 }}>Map Provider Configuration</h3>
+                            </div>
+                            <p style={{ fontSize: '14px', color: 'var(--text-muted)', marginBottom: '20px' }}>
+                                Select the map service provider for routing and display across all apps (Customer, Driver, Admin).
+                            </p>
+                            <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+                                {[
+                                    { value: 'google', label: 'Google Maps', desc: 'Global coverage, accurate routing' },
+                                    { value: 'here', label: 'HERE Maps', desc: 'Enterprise-grade navigation' },
+                                    { value: 'longdo', label: 'Longdo Map', desc: 'Thailand-focused mapping' }
+                                ].map((option) => (
+                                    <button
+                                        key={option.value}
+                                        onClick={() => handleMapProviderUpdate(option.value as any)}
+                                        disabled={loadingMap}
+                                        style={{
+                                            flex: '1 1 auto',
+                                            minWidth: '180px',
+                                            padding: '16px',
+                                            borderRadius: '12px',
+                                            border: `2px solid ${mapProvider === option.value ? 'var(--primary)' : '#e2e8f0'}`,
+                                            background: mapProvider === option.value ? '#eff6ff' : 'white',
+                                            cursor: loadingMap ? 'not-allowed' : 'pointer',
+                                            textAlign: 'left',
+                                            transition: 'all 0.2s',
+                                            opacity: loadingMap ? 0.6 : 1
+                                        }}
+                                    >
+                                        <div style={{ fontSize: '14px', fontWeight: '700', color: mapProvider === option.value ? 'var(--primary)' : 'var(--text-main)', marginBottom: '4px' }}>
+                                            {option.label}
                                         </div>
-                                    )}
-                                </button>
-                            ))}
+                                        <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
+                                            {option.desc}
+                                        </div>
+                                        {mapProvider === option.value && (
+                                            <div style={{ marginTop: '8px', display: 'flex', alignItems: 'center', gap: '4px', fontSize: '12px', color: 'var(--primary)', fontWeight: '600' }}>
+                                                <CheckCircle2 size={14} />
+                                                Active
+                                            </div>
+                                        )}
+                                    </button>
+                                ))}
+                            </div>
                         </div>
-                    </div>
+                    )}
 
                     {/* Financial Parameters */}
-                    <div className="card">
-                        <h3 style={{ fontSize: '18px', fontWeight: '700', marginBottom: '24px' }}>Financial Parameters</h3>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-                            {settings.map((setting) => (
-                                <div key={setting.key} style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                        <label style={{ fontSize: '14px', fontWeight: '600', color: 'var(--text-main)' }}>
-                                            {setting.key.replace(/_/g, ' ').toUpperCase()}
-                                        </label>
-                                        <button
-                                            onClick={() => handleUpdate(setting.key, setting.value)}
-                                            disabled={saving}
+                    {activeTab === 'financial' && (
+                        <div className="card">
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '24px' }}>
+                                <CreditCard size={20} color="var(--primary)" />
+                                <h3 style={{ fontSize: '18px', fontWeight: '700', margin: 0 }}>Financial Parameters</h3>
+                            </div>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                                {settings.map((setting) => (
+                                    <div key={setting.key} style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                            <label style={{ fontSize: '14px', fontWeight: '600', color: 'var(--text-main)' }}>
+                                                {setting.key.replace(/_/g, ' ').toUpperCase()}
+                                            </label>
+                                            <button
+                                                onClick={() => handleUpdate(setting.key, setting.value)}
+                                                disabled={saving}
+                                                style={{
+                                                    fontSize: '12px',
+                                                    fontWeight: '700',
+                                                    color: 'var(--primary)',
+                                                    background: 'transparent',
+                                                    border: 'none',
+                                                    cursor: 'pointer',
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    gap: '4px'
+                                                }}
+                                            >
+                                                {saving ? <RefreshCw size={12} className="animate-spin" /> : <Save size={12} />}
+                                                Update
+                                            </button>
+                                        </div>
+                                        <input
+                                            type="text"
+                                            value={setting.value}
+                                            onChange={(e) => setSettings(settings.map(s => s.key === setting.key ? { ...s, value: e.target.value } : s))}
                                             style={{
-                                                fontSize: '12px',
-                                                fontWeight: '700',
-                                                color: 'var(--primary)',
-                                                background: 'transparent',
-                                                border: 'none',
-                                                cursor: 'pointer',
-                                                display: 'flex',
-                                                alignItems: 'center',
-                                                gap: '4px'
+                                                padding: '10px 16px',
+                                                borderRadius: '10px',
+                                                border: '1px solid #e2e8f0',
+                                                background: '#f8fafc',
+                                                fontSize: '14px',
+                                                color: 'var(--text-main)',
+                                                outline: 'none'
                                             }}
-                                        >
-                                            {saving ? <RefreshCw size={12} className="animate-spin" /> : <Save size={12} />}
-                                            Update
-                                        </button>
+                                        />
+                                        {setting.description && (
+                                            <p style={{ fontSize: '12px', color: 'var(--text-muted)' }}>{setting.description}</p>
+                                        )}
                                     </div>
-                                    <input
-                                        type="text"
-                                        value={setting.value}
-                                        onChange={(e) => setSettings(settings.map(s => s.key === setting.key ? { ...s, value: e.target.value } : s))}
-                                        style={{
-                                            padding: '10px 16px',
-                                            borderRadius: '10px',
-                                            border: '1px solid #e2e8f0',
-                                            background: '#f8fafc',
-                                            fontSize: '14px',
-                                            color: 'var(--text-main)',
-                                            outline: 'none'
-                                        }}
-                                    />
-                                    {setting.description && (
-                                        <p style={{ fontSize: '12px', color: 'var(--text-muted)' }}>{setting.description}</p>
-                                    )}
-                                </div>
-                            ))}
+                                ))}
+                            </div>
                         </div>
-                    </div>
+                    )}
 
                     <div className="card" style={{ background: '#f8fafc', border: '1px dashed #cbd5e1' }}>
                         <div style={{ textAlign: 'center', padding: '24px' }}>
