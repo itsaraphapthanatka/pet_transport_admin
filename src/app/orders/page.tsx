@@ -20,17 +20,28 @@ export default function OrdersPage() {
     const [orders, setOrders] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
+    const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
         async function fetchOrders() {
             try {
+                console.log('Fetching orders from API...');
                 const res = await apiFetch('/orders/');
+                console.log('API Response status:', res.status);
+
                 if (res.ok) {
                     const data = await res.json();
+                    console.log('Orders data:', data);
                     setOrders(data);
+                    setError(null);
+                } else {
+                    const errorText = await res.text();
+                    console.error('API Error:', res.status, errorText);
+                    setError(`Failed to fetch orders: ${res.status} ${errorText}`);
                 }
-            } catch (error) {
+            } catch (error: any) {
                 console.error('Error fetching orders:', error);
+                setError(`Error: ${error.message}`);
             } finally {
                 setLoading(false);
             }
@@ -92,6 +103,27 @@ export default function OrdersPage() {
                     </button>
                 </div>
             </div>
+
+            {error && (
+                <div className="card" style={{
+                    marginBottom: '24px',
+                    background: '#fef2f2',
+                    border: '1px solid #fecaca',
+                    padding: '16px'
+                }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                        <AlertCircle size={20} color="#dc2626" />
+                        <div>
+                            <p style={{ fontSize: '14px', fontWeight: '600', color: '#dc2626', marginBottom: '4px' }}>
+                                Error Loading Orders
+                            </p>
+                            <p style={{ fontSize: '13px', color: '#991b1b' }}>
+                                {error}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             <div className="card" style={{ marginBottom: '24px', padding: '16px' }}>
                 <div style={{ display: 'flex', gap: '16px' }}>
