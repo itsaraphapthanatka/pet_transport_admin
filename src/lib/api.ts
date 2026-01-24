@@ -1,5 +1,8 @@
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
 
+// Prevent multiple simultaneous redirects
+let isRedirectingToLogin = false;
+
 export async function apiFetch(endpoint: string, options: RequestInit = {}) {
     const token = typeof window !== 'undefined' ? localStorage.getItem('admin_token') : null;
 
@@ -15,7 +18,8 @@ export async function apiFetch(endpoint: string, options: RequestInit = {}) {
     });
 
     if (response.status === 401) {
-        if (typeof window !== 'undefined') {
+        if (typeof window !== 'undefined' && !isRedirectingToLogin) {
+            isRedirectingToLogin = true;
             localStorage.removeItem('admin_token');
             localStorage.removeItem('admin_user');
             window.location.href = '/login';

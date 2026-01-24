@@ -11,20 +11,28 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     const router = useRouter();
     const [authorized, setAuthorized] = useState(false);
     const [loading, setLoading] = useState(true);
+    const [isRedirecting, setIsRedirecting] = useState(false);
 
     useEffect(() => {
+        // Prevent redirect loop
+        if (isRedirecting) return;
+
         const token = localStorage.getItem('admin_token');
         const isLoginPage = pathname === '/login';
 
         if (!token && !isLoginPage) {
+            setIsRedirecting(true);
             router.push('/login');
+            return;
         } else if (token && isLoginPage) {
+            setIsRedirecting(true);
             router.push('/');
+            return;
         } else {
             setAuthorized(true);
         }
         setLoading(false);
-    }, [pathname, router]);
+    }, [pathname, router, isRedirecting]);
 
     if (loading) {
         return (

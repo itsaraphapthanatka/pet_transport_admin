@@ -36,9 +36,25 @@ export default function LoginPage() {
                 throw new Error('Only administrators can access this dashboard');
             }
 
+            // Store token and user data
             localStorage.setItem('admin_token', data.access_token);
             localStorage.setItem('admin_user', JSON.stringify(data.admin || data.user));
 
+            // Verify token works before redirecting
+            const verifyResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/admin/stats`, {
+                headers: {
+                    'Authorization': `Bearer ${data.access_token}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            if (!verifyResponse.ok) {
+                localStorage.removeItem('admin_token');
+                localStorage.removeItem('admin_user');
+                throw new Error('Authentication failed. Please try again.');
+            }
+
+            // Only redirect if token is verified
             router.push('/');
         } catch (err: any) {
             setError(err.message);
