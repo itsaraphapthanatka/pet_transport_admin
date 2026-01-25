@@ -76,9 +76,21 @@ else
     
     # When running in prod, still need to ensure static files are in place
     echo -e "${YELLOW}📦 Ensuring static files are in place...${NC}"
+    
+    # Ensure nested structure exists for standalone mode
+    mkdir -p "$APP_DIR/.next/standalone/.next"
+    mkdir -p "$APP_DIR/.next/standalone/public"
+
+    # Copy to root .next (just in case)
     mkdir -p "$APP_DIR/.next"
     cp -r .next/static "$APP_DIR/.next/" 2>/dev/null || true
+    
+    # Copy to standalone .next (CRITICAL for node .next/standalone/server.js)
+    cp -r .next/static "$APP_DIR/.next/standalone/.next/" 2>/dev/null || true
+    
+    # Copy public
     cp -r public "$APP_DIR/" 2>/dev/null || true
+    cp -r public "$APP_DIR/.next/standalone/" 2>/dev/null || true
 fi
 
 # ====================================================

@@ -37,13 +37,25 @@ export default function VerificationPage() {
     }, []);
 
     const handleVerify = async (driverId: number) => {
-        // Note: backend might need a specific verification endpoint
-        // For now, let's assume we update the driver record
         try {
-            // Logic for verification would go here
-            alert(`Verifying driver ID: ${driverId} (Endpoint integration pending)`);
+            const confirmed = window.confirm("Are you sure you want to approve this driver?");
+            if (!confirmed) return;
+
+            const res = await apiFetch(`/drivers/${driverId}/verify`, {
+                method: 'POST'
+            });
+
+            if (res.ok) {
+                alert("Driver verified successfully!");
+                // Refresh list
+                setDrivers(prev => prev.filter(d => d.id !== driverId));
+            } else {
+                const err = await res.json();
+                alert(`Failed: ${err.detail || 'Unknown error'}`);
+            }
         } catch (error) {
             console.error('Error verifying driver:', error);
+            alert("Error connecting to server");
         }
     };
 
