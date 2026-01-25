@@ -30,11 +30,11 @@ export default function AdminsPage() {
         if (adminUser) {
             const parsedUser = JSON.parse(adminUser);
             setUser(parsedUser);
-            if (parsedUser.role !== "super_admin") {
+            if (!['super_admin', 'admin'].includes(parsedUser.role)) {
                 Swal.fire({
                     icon: "error",
                     title: "Access Denied",
-                    text: "Only Super Admins can access this page",
+                    text: "Only Administrators can access this page",
                 }).then(() => {
                     router.push("/");
                 });
