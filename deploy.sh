@@ -59,8 +59,11 @@ if [ "$RUNNING_IN_PROD" = false ]; then
     # Copy standalone build
     cp -r .next/standalone/* "$APP_DIR/"
 
-    # Copy static files
+    # Copy static files to standalone directory
+    mkdir -p "$APP_DIR/.next"
     cp -r .next/static "$APP_DIR/.next/"
+    
+    # Copy public files to standalone directory
     cp -r public "$APP_DIR/"
 
     # Copy configuration files
@@ -70,6 +73,12 @@ if [ "$RUNNING_IN_PROD" = false ]; then
     echo -e "${GREEN}✅ Files copied${NC}"
 else
     echo -e "${YELLOW}⏭️  Skipping file copy (already in production directory)${NC}"
+    
+    # When running in prod, still need to ensure static files are in place
+    echo -e "${YELLOW}📦 Ensuring static files are in place...${NC}"
+    mkdir -p "$APP_DIR/.next"
+    cp -r .next/static "$APP_DIR/.next/" 2>/dev/null || true
+    cp -r public "$APP_DIR/" 2>/dev/null || true
 fi
 
 # ====================================================
