@@ -26,16 +26,33 @@ const Sidebar = () => {
         router.push('/login');
     };
 
+    const [role, setRole] = React.useState<string>('admin');
+
+    React.useEffect(() => {
+        const storedUser = localStorage.getItem('admin_user');
+        if (storedUser) {
+            try {
+                const user = JSON.parse(storedUser);
+                setRole(user.role || 'admin');
+            } catch (e) {
+                console.error("Error parsing user data", e);
+            }
+        }
+    }, []);
+
     const menuItems = [
-        { name: 'Dashboard', icon: LayoutDashboard, href: '/' },
-        { name: 'Users', icon: Users, href: '/users' },
-        { name: 'Drivers', icon: Car, href: '/drivers' },
-        { name: 'Orders', icon: ClipboardList, href: '/orders' },
-        { name: 'Live Map', icon: MapIcon, href: '/map' },
-        { name: 'Verification', icon: ShieldCheck, href: '/verification' },
-        { name: 'Notifications', icon: Bell, href: '/notifications' },
-        { name: 'Settings', icon: Settings, href: '/settings' },
+        { name: 'Dashboard', icon: LayoutDashboard, href: '/', roles: ['super_admin', 'admin', 'moderator'] },
+        { name: 'Users', icon: Users, href: '/users', roles: ['super_admin', 'admin'] },
+        { name: 'Drivers', icon: Car, href: '/drivers', roles: ['super_admin', 'admin'] },
+        { name: 'Orders', icon: ClipboardList, href: '/orders', roles: ['super_admin', 'admin', 'moderator'] },
+        { name: 'Live Map', icon: MapIcon, href: '/map', roles: ['super_admin', 'admin', 'moderator'] },
+        { name: 'Verification', icon: ShieldCheck, href: '/verification', roles: ['super_admin', 'admin'] },
+        { name: 'Notifications', icon: Bell, href: '/notifications', roles: ['super_admin', 'admin', 'moderator'] },
+        { name: 'Admin Management', icon: Users, href: '/admins', roles: ['super_admin'] },
+        { name: 'Settings', icon: Settings, href: '/settings', roles: ['super_admin', 'admin'] },
     ];
+
+    const filteredMenuItems = menuItems.filter(item => item.roles.includes(role));
 
     return (
         <aside className="sidebar">
@@ -48,7 +65,7 @@ const Sidebar = () => {
 
             <nav className="flex-1">
                 <ul className="nav-list">
-                    {menuItems.map((item) => {
+                    {filteredMenuItems.map((item) => {
                         const isActive = pathname === item.href;
                         return (
                             <li key={item.name}>
