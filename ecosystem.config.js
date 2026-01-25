@@ -2,8 +2,7 @@ module.exports = {
     apps: [
         {
             name: 'petgo-admin',
-            script: 'node_modules/next/dist/bin/next',
-            args: 'start',
+            script: '.next/standalone/server.js',
             cwd: '/var/www/admin.petgo.asia/pet_transport_admin',
             instances: 1,
             exec_mode: 'cluster',
@@ -12,6 +11,7 @@ module.exports = {
             env: {
                 NODE_ENV: 'production',
                 PORT: 3001,
+                HOSTNAME: '0.0.0.0',
             },
             error_file: '/var/www/admin.petgo.asia/logs/pm2-error.log',
             out_file: '/var/www/admin.petgo.asia/logs/pm2-out.log',
