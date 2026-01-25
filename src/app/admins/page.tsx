@@ -4,6 +4,21 @@ import { useEffect, useState } from "react";
 import { Admin, adminService, CreateAdminData, UpdateAdminData } from "@/services/adminService";
 import { useRouter } from "next/navigation";
 import Swal from "sweetalert2";
+import {
+    Users,
+    Search,
+    Filter,
+    Plus,
+    MoreVertical,
+    Clock,
+    Shield,
+    Mail,
+    Edit2,
+    Trash2,
+    CheckCircle2,
+    X,
+    Loader2
+} from 'lucide-react';
 
 export default function AdminsPage() {
     const router = useRouter();
@@ -12,6 +27,7 @@ export default function AdminsPage() {
     const [showModal, setShowModal] = useState(false);
     const [editingAdmin, setEditingAdmin] = useState<Admin | null>(null);
     const [user, setUser] = useState<any>(null);
+    const [searchTerm, setSearchTerm] = useState('');
 
     // Form states
     const [fullName, setFullName] = useState("");
@@ -41,11 +57,6 @@ export default function AdminsPage() {
                 return;
             }
         } else {
-            // If token exists but user data is missing, we might be in an inconsistent state.
-            // Fetching admins might still work if the token is valid, but for safety, 
-            // let's try to get stats or something, or just redirect to home.
-            // For now, if we have a token but no user object, we let it try fetchAdmins
-            // but warn the user.
             console.warn("Admin user data missing from localStorage");
         }
         fetchAdmins();
@@ -124,7 +135,13 @@ export default function AdminsPage() {
                 if (password) updateData.password = password;
 
                 await adminService.updateAdmin(editingAdmin.id, updateData);
-                Swal.fire("Success", "Admin updated successfully", "success");
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Updated!',
+                    text: 'Admin updated successfully',
+                    timer: 1500,
+                    showConfirmButton: false
+                });
             } else {
                 // Create
                 if (!password) {
@@ -138,7 +155,13 @@ export default function AdminsPage() {
                     role: role,
                 };
                 await adminService.createAdmin(createData);
-                Swal.fire("Success", "Admin created successfully", "success");
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Created!',
+                    text: 'Admin created successfully',
+                    timer: 1500,
+                    showConfirmButton: false
+                });
             }
             resetForm();
             fetchAdmins();
@@ -147,164 +170,377 @@ export default function AdminsPage() {
         }
     };
 
-    if (loading) return <div className="p-8 text-center">Loading...</div>;
+    const filteredAdmins = admins.filter(admin =>
+        admin.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        admin.email.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+
+    if (loading) {
+        return (
+            <div style={{ height: '60vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <Loader2 className="animate-spin" size={48} color="var(--primary)" />
+            </div>
+        );
+    }
 
     return (
-        <div className="p-6">
-            <div className="flex justify-between items-center mb-6">
-                <h1 className="text-2xl font-bold">Admin Management</h1>
+        <div>
+            {/* Header Section */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '32px' }}>
+                <div>
+                    <h2 style={{ fontSize: '24px', fontWeight: '800', color: 'var(--text-main)', marginBottom: '4px' }}>Admin Management</h2>
+                    <p style={{ color: 'var(--text-muted)', fontSize: '14px' }}>Manage system administrators and their permissions.</p>
+                </div>
                 <button
                     onClick={handleCreate}
-                    className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+                    style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                        padding: '10px 20px',
+                        background: 'var(--primary)',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '10px',
+                        fontSize: '14px',
+                        fontWeight: '600',
+                        cursor: 'pointer',
+                        boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
+                    }}
                 >
+                    <Plus size={18} />
                     Add New Admin
                 </button>
             </div>
 
-            <div className="bg-white rounded-lg shadow overflow-hidden">
-                <table className="min-w-full divide-y divide-gray-200">
-                    <thead className="bg-gray-50">
-                        <tr>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                ID
-                            </th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Name
-                            </th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Email
-                            </th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Role
-                            </th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Last Login
-                            </th>
-                            <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                Actions
-                            </th>
+            {/* Search & Filter Section */}
+            <div className="card" style={{ marginBottom: '24px', padding: '16px' }}>
+                <div style={{ display: 'flex', gap: '16px' }}>
+                    <div style={{
+                        flex: 1,
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '12px',
+                        background: '#f1f5f9',
+                        padding: '10px 16px',
+                        borderRadius: '10px'
+                    }}>
+                        <Search size={18} color="var(--text-muted)" />
+                        <input
+                            type="text"
+                            placeholder="Search by Name or Email..."
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            style={{ background: 'transparent', border: 'none', outline: 'none', width: '100%', fontSize: '14px' }}
+                        />
+                    </div>
+                    <button style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                        padding: '10px 16px',
+                        background: 'white',
+                        border: '1px solid #e2e8f0',
+                        borderRadius: '10px',
+                        fontSize: '14px',
+                        fontWeight: '600',
+                        cursor: 'pointer'
+                    }}>
+                        <Filter size={18} />
+                        Filter
+                    </button>
+                </div>
+            </div>
+
+            {/* Admins Table */}
+            <div className="card" style={{ padding: '0', overflowX: 'auto' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+                    <thead>
+                        <tr style={{ borderBottom: '1px solid var(--card-border)', background: '#f8fafc' }}>
+                            <th style={{ padding: '16px 24px', color: 'var(--text-muted)', fontSize: '12px', textTransform: 'uppercase', fontWeight: '600' }}>Admin Info</th>
+                            <th style={{ padding: '16px 24px', color: 'var(--text-muted)', fontSize: '12px', textTransform: 'uppercase', fontWeight: '600' }}>Role</th>
+                            <th style={{ padding: '16px 24px', color: 'var(--text-muted)', fontSize: '12px', textTransform: 'uppercase', fontWeight: '600' }}>Last Login</th>
+                            <th style={{ padding: '16px 24px', color: 'var(--text-muted)', fontSize: '12px', textTransform: 'uppercase', fontWeight: '600' }}>Status</th>
+                            <th style={{ padding: '16px 24px', color: 'var(--text-muted)', textAlign: 'right' }}>Actions</th>
                         </tr>
                     </thead>
-                    <tbody className="bg-white divide-y divide-gray-200">
-                        {admins.map((admin) => (
-                            <tr key={admin.id}>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                    {admin.id}
-                                </td>
-                                <td className="px-6 py-4 whitespace-nowrap">
-                                    <div className="text-sm font-medium text-gray-900">
-                                        {admin.full_name || "-"}
+                    <tbody>
+                        {filteredAdmins.map((admin) => (
+                            <tr key={admin.id} style={{ borderBottom: '1px solid var(--card-border)' }}>
+                                <td style={{ padding: '16px 24px' }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                                        <div style={{
+                                            width: '40px',
+                                            height: '40px',
+                                            borderRadius: '50%',
+                                            background: '#f1f5f9',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                            color: 'var(--text-muted)'
+                                        }}>
+                                            <Users size={20} />
+                                        </div>
+                                        <div>
+                                            <p style={{ fontSize: '14px', fontWeight: '700', color: 'var(--text-main)' }}>{admin.full_name || "Unknown"}</p>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '12px', color: 'var(--text-muted)' }}>
+                                                <Mail size={12} />
+                                                {admin.email}
+                                            </div>
+                                        </div>
                                     </div>
                                 </td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                    {admin.email}
-                                </td>
-                                <td className="px-6 py-4 whitespace-nowrap">
-                                    <span
-                                        className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${admin.role === "super_admin"
-                                            ? "bg-purple-100 text-purple-800"
-                                            : "bg-green-100 text-green-800"
-                                            }`}
-                                    >
-                                        {admin.role}
+                                <td style={{ padding: '16px 24px' }}>
+                                    <span style={{
+                                        display: 'inline-flex',
+                                        alignItems: 'center',
+                                        gap: '4px',
+                                        fontSize: '11px',
+                                        fontWeight: '700',
+                                        padding: '4px 10px',
+                                        borderRadius: '20px',
+                                        background: admin.role === 'super_admin' ? '#f3e8ff' : '#eff6ff',
+                                        color: admin.role === 'super_admin' ? '#7e22ce' : '#2563eb'
+                                    }}>
+                                        <Shield size={12} />
+                                        {admin.role === 'super_admin' ? 'Super Admin' : admin.role === 'admin' ? 'Administrator' : 'Moderator'}
                                     </span>
                                 </td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                    {admin.last_login
-                                        ? new Date(admin.last_login).toLocaleString()
-                                        : "Never"}
+                                <td style={{ padding: '16px 24px' }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', color: 'var(--text-muted)' }}>
+                                        <Clock size={14} />
+                                        {admin.last_login ? new Date(admin.last_login).toLocaleString('en-GB') : "Never"}
+                                    </div>
                                 </td>
-                                <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                    <button
-                                        onClick={() => handleEdit(admin)}
-                                        className="text-indigo-600 hover:text-indigo-900 mr-4"
-                                    >
-                                        Edit
-                                    </button>
-                                    <button
-                                        onClick={() => handleDelete(admin.id)}
-                                        className="text-red-600 hover:text-red-900"
-                                        disabled={admin.role === "super_admin"} // Prevent deleting super admins for safety/demo
-                                    >
-                                        Delete
-                                    </button>
+                                <td style={{ padding: '16px 24px' }}>
+                                    <span style={{
+                                        display: 'inline-flex',
+                                        alignItems: 'center',
+                                        gap: '4px',
+                                        fontSize: '11px',
+                                        fontWeight: '700',
+                                        padding: '4px 10px',
+                                        borderRadius: '20px',
+                                        background: '#ecfdf5',
+                                        color: '#059669'
+                                    }}>
+                                        <CheckCircle2 size={12} />
+                                        Active
+                                    </span>
+                                </td>
+                                <td style={{ padding: '16px 24px', textAlign: 'right' }}>
+                                    <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
+                                        <button
+                                            onClick={() => handleEdit(admin)}
+                                            style={{
+                                                padding: '8px',
+                                                borderRadius: '8px',
+                                                border: 'none',
+                                                background: '#f1f5f9',
+                                                cursor: 'pointer',
+                                                color: '#475569',
+                                                transition: 'all 0.2s'
+                                            }}
+                                            title="Edit"
+                                        >
+                                            <Edit2 size={16} />
+                                        </button>
+                                        <button
+                                            onClick={() => handleDelete(admin.id)}
+                                            style={{
+                                                padding: '8px',
+                                                borderRadius: '8px',
+                                                border: 'none',
+                                                background: '#fef2f2',
+                                                cursor: 'pointer',
+                                                color: '#dc2626',
+                                                opacity: admin.role === 'super_admin' ? 0.5 : 1,
+                                                pointerEvents: admin.role === 'super_admin' ? 'none' : 'auto'
+                                            }}
+                                            title="Delete"
+                                            disabled={admin.role === 'super_admin'}
+                                        >
+                                            <Trash2 size={16} />
+                                        </button>
+                                    </div>
                                 </td>
                             </tr>
                         ))}
+                        {filteredAdmins.length === 0 && (
+                            <tr>
+                                <td colSpan={5} style={{ padding: '48px', textAlign: 'center', color: 'var(--text-muted)' }}>
+                                    No admins found matching your search.
+                                </td>
+                            </tr>
+                        )}
                     </tbody>
                 </table>
             </div>
 
-            {/* Modal */}
+            {/* Create/Edit Modal */}
             {showModal && (
-                <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full flex items-center justify-center">
-                    <div className="bg-white p-8 rounded-lg shadow-xl w-full max-w-md">
-                        <h2 className="text-xl font-bold mb-4">
-                            {editingAdmin ? "Edit Admin" : "Add New Admin"}
-                        </h2>
-                        <form onSubmit={handleSubmit}>
-                            <div className="mb-4">
-                                <label className="block text-gray-700 text-sm font-bold mb-2">
+                <div style={{
+                    position: 'fixed',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    background: 'rgba(0,0,0,0.5)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    zIndex: 50,
+                    backdropFilter: 'blur(4px)'
+                }}>
+                    <div style={{
+                        background: 'white',
+                        borderRadius: '16px',
+                        width: '100%',
+                        maxWidth: '480px',
+                        boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
+                        overflow: 'hidden',
+                        animation: 'fadeIn 0.2s ease-out'
+                    }}>
+                        <div style={{
+                            padding: '24px',
+                            borderBottom: '1px solid #e2e8f0',
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            alignItems: 'center'
+                        }}>
+                            <h3 style={{ fontSize: '18px', fontWeight: '700' }}>
+                                {editingAdmin ? "Edit Admin" : "Add New Admin"}
+                            </h3>
+                            <button
+                                onClick={resetForm}
+                                style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: '#64748b' }}
+                            >
+                                <X size={20} />
+                            </button>
+                        </div>
+
+                        <form onSubmit={handleSubmit} style={{ padding: '24px' }}>
+                            <div style={{ marginBottom: '16px' }}>
+                                <label style={{ display: 'block', fontSize: '14px', fontWeight: '600', color: '#334155', marginBottom: '6px' }}>
                                     Full Name
                                 </label>
                                 <input
                                     type="text"
                                     value={fullName}
                                     onChange={(e) => setFullName(e.target.value)}
-                                    className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                                    placeholder="e.g. John Doe"
+                                    style={{
+                                        width: '100%',
+                                        padding: '10px 12px',
+                                        borderRadius: '8px',
+                                        border: '1px solid #cbd5e1',
+                                        fontSize: '14px',
+                                        outline: 'none'
+                                    }}
+                                    required
                                 />
                             </div>
-                            <div className="mb-4">
-                                <label className="block text-gray-700 text-sm font-bold mb-2">
-                                    Email
+
+                            <div style={{ marginBottom: '16px' }}>
+                                <label style={{ display: 'block', fontSize: '14px', fontWeight: '600', color: '#334155', marginBottom: '6px' }}>
+                                    Email Address
                                 </label>
                                 <input
                                     type="email"
                                     value={email}
                                     onChange={(e) => setEmail(e.target.value)}
-                                    className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                                    placeholder="admin@petgo.com"
+                                    style={{
+                                        width: '100%',
+                                        padding: '10px 12px',
+                                        borderRadius: '8px',
+                                        border: '1px solid #cbd5e1',
+                                        fontSize: '14px',
+                                        outline: 'none'
+                                    }}
                                     required
                                 />
                             </div>
-                            <div className="mb-4">
-                                <label className="block text-gray-700 text-sm font-bold mb-2">
-                                    Password {editingAdmin && "(Leave blank to keep current)"}
+
+                            <div style={{ marginBottom: '16px' }}>
+                                <label style={{ display: 'block', fontSize: '14px', fontWeight: '600', color: '#334155', marginBottom: '6px' }}>
+                                    Role
+                                </label>
+                                <div style={{ position: 'relative' }}>
+                                    <select
+                                        value={role}
+                                        onChange={(e) => setRole(e.target.value)}
+                                        style={{
+                                            width: '100%',
+                                            padding: '10px 12px',
+                                            borderRadius: '8px',
+                                            border: '1px solid #cbd5e1',
+                                            fontSize: '14px',
+                                            outline: 'none',
+                                            appearance: 'none',
+                                            background: 'white'
+                                        }}
+                                    >
+                                        <option value="admin">Administrator</option>
+                                        <option value="super_admin">Super Admin</option>
+                                        <option value="moderator">Moderator</option>
+                                    </select>
+                                    <Shield size={16} color="#64748b" style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} />
+                                </div>
+                            </div>
+
+                            <div style={{ marginBottom: '24px' }}>
+                                <label style={{ display: 'block', fontSize: '14px', fontWeight: '600', color: '#334155', marginBottom: '6px' }}>
+                                    Password {editingAdmin && <span style={{ fontWeight: '400', color: '#94a3b8' }}>(Leave blank to keep current)</span>}
                                 </label>
                                 <input
                                     type="password"
                                     value={password}
                                     onChange={(e) => setPassword(e.target.value)}
-                                    className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                                    placeholder="••••••••"
+                                    style={{
+                                        width: '100%',
+                                        padding: '10px 12px',
+                                        borderRadius: '8px',
+                                        border: '1px solid #cbd5e1',
+                                        fontSize: '14px',
+                                        outline: 'none'
+                                    }}
                                     required={!editingAdmin}
                                 />
                             </div>
-                            <div className="mb-6">
-                                <label className="block text-gray-700 text-sm font-bold mb-2">
-                                    Role
-                                </label>
-                                <select
-                                    value={role}
-                                    onChange={(e) => setRole(e.target.value)}
-                                    className="shadow border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                                >
-                                    <option value="admin">Admin</option>
-                                    <option value="super_admin">Super Admin</option>
-                                    <option value="moderator">Moderator</option>
-                                </select>
-                            </div>
-                            <div className="flex justify-end gap-2">
+
+                            <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
                                 <button
                                     type="button"
                                     onClick={resetForm}
-                                    className="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
+                                    style={{
+                                        padding: '10px 20px',
+                                        borderRadius: '8px',
+                                        background: 'white',
+                                        border: '1px solid #e2e8f0',
+                                        fontSize: '14px',
+                                        fontWeight: '600',
+                                        color: '#64748b',
+                                        cursor: 'pointer'
+                                    }}
                                 >
                                     Cancel
                                 </button>
                                 <button
                                     type="submit"
-                                    className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
+                                    style={{
+                                        padding: '10px 24px',
+                                        borderRadius: '8px',
+                                        background: 'var(--primary)',
+                                        border: 'none',
+                                        fontSize: '14px',
+                                        fontWeight: '600',
+                                        color: 'white',
+                                        cursor: 'pointer'
+                                    }}
                                 >
-                                    Save
+                                    {editingAdmin ? "Save Changes" : "Create Admin"}
                                 </button>
                             </div>
                         </form>
