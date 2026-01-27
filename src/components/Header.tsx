@@ -1,15 +1,43 @@
-"use client";
-
-import React from 'react';
-import { Search, Bell, User, Menu } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { Search, Bell, User, Menu, LogOut, Settings as SettingsIcon } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 
 interface HeaderProps {
     onMenuClick?: () => void;
 }
 
 const Header = ({ onMenuClick }: HeaderProps) => {
+    const router = useRouter();
+    const [adminUser, setAdminUser] = useState<any>(null);
+    const [showUserMenu, setShowUserMenu] = useState(false);
+    const [searchQuery, setSearchQuery] = useState('');
+
+    useEffect(() => {
+        const storedUser = localStorage.getItem('admin_user');
+        if (storedUser) {
+            try {
+                setAdminUser(JSON.parse(storedUser));
+            } catch (e) {
+                console.error("Error parsing admin user data", e);
+            }
+        }
+    }, []);
+
+    const handleLogout = () => {
+        localStorage.removeItem('admin_token');
+        localStorage.removeItem('admin_user');
+        router.push('/login');
+    };
+
+    const handleSearch = (e: React.KeyboardEvent) => {
+        if (e.key === 'Enter' && searchQuery.trim()) {
+            router.push(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
+        }
+    };
+
     return (
-        <header className="header">
+        <header className="header" style={{ position: 'relative' }}>
             <button className="menu-btn" onClick={onMenuClick}>
                 <Menu size={24} />
             </button>
@@ -26,6 +54,9 @@ const Header = ({ onMenuClick }: HeaderProps) => {
                 <input
                     type="text"
                     placeholder="Search for orders, users, drivers..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    onKeyDown={handleSearch}
                     style={{
                         background: 'transparent',
                         border: 'none',
@@ -37,25 +68,35 @@ const Header = ({ onMenuClick }: HeaderProps) => {
                 />
             </div>
 
-            <div style={{ display: 'flex', alignItems: 'center', gap: '24px' }}>
-                <button style={{ background: 'transparent', border: 'none', position: 'relative', cursor: 'pointer' }}>
-                    <Bell size={20} color="var(--text-main)" />
-                    <span style={{
-                        position: 'absolute',
-                        top: '-2px',
-                        right: '-2px',
-                        background: '#ef4444',
-                        width: '8px',
-                        height: '8px',
-                        borderRadius: '50%',
-                        border: '2px solid white'
-                    }}></span>
-                </button>
 
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', cursor: 'pointer' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '24px' }}>
+                <Link href="/notifications">
+                    <button style={{ background: 'transparent', border: 'none', position: 'relative', cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
+                        <Bell size={20} color="var(--text-main)" />
+                        <span style={{
+                            position: 'absolute',
+                            top: '-2px',
+                            right: '-2px',
+                            background: '#ef4444',
+                            width: '8px',
+                            height: '8px',
+                            borderRadius: '50%',
+                            border: '2px solid white'
+                        }}></span>
+                    </button>
+                </Link>
+
+                <div
+                    style={{ display: 'flex', alignItems: 'center', gap: '12px', cursor: 'pointer', position: 'relative' }}
+                    onClick={() => setShowUserMenu(!showUserMenu)}
+                >
                     <div style={{ textAlign: 'right' }}>
-                        <p style={{ fontSize: '14px', fontWeight: '600', color: 'var(--text-main)' }}>Admin User</p>
-                        <p style={{ fontSize: '11px', fontWeight: '500', color: 'var(--text-muted)' }}>Super Administrator</p>
+                        <p style={{ fontSize: '14px', fontWeight: '600', color: 'var(--text-main)' }}>
+                            {adminUser?.full_name || 'Admin User'}
+                        </p>
+                        <p style={{ fontSize: '11px', fontWeight: '500', color: 'var(--text-muted)', textTransform: 'capitalize' }}>
+                            {adminUser?.role?.replace('_', ' ') || 'Administrator'}
+                        </p>
                     </div>
                     <div style={{
                         width: '40px',
@@ -69,6 +110,41 @@ const Header = ({ onMenuClick }: HeaderProps) => {
                     }}>
                         <User size={20} />
                     </div>
+
+                    {/* User Dropdown Menu */}
+                    {showUserMenu && (
+                        <div style={{
+                            position: 'absolute',
+                            top: '100%',
+                            right: 0,
+                            marginTop: '12px',
+                            width: '200px',
+                            background: 'white',
+                            borderRadius: '12px',
+                            boxShadow: '0 10px 25px rgba(0,0,0,0.1)',
+                            border: '1px solid #e2e8f0',
+                            overflow: 'hidden',
+                            zIndex: 1000
+                        }}>
+                            <div style={{ padding: '16px', borderBottom: '1px solid #f1f5f9' }}>
+                                <p style={{ fontSize: '13px', fontWeight: '600', color: '#1e293b' }}>{adminUser?.email}</p>
+                            </div>
+                            <Link href="/settings" onClick={() => setShowUserMenu(false)}>
+                                <div style={{ padding: '12px 16px', display: 'flex', alignItems: 'center', gap: '10px', fontSize: '14px', color: '#475569', transition: 'background 0.2s' }} className="hover:bg-slate-50">
+                                    <SettingsIcon size={16} />
+                                    <span>Settings</span>
+                                </div>
+                            </Link>
+                            <div
+                                onClick={handleLogout}
+                                style={{ padding: '12px 16px', display: 'flex', alignItems: 'center', gap: '10px', fontSize: '14px', color: '#ef4444', transition: 'background 0.2s', cursor: 'pointer' }}
+                                className="hover:bg-red-50"
+                            >
+                                <LogOut size={16} />
+                                <span>Logout</span>
+                            </div>
+                        </div>
+                    )}
                 </div>
             </div>
         </header>
@@ -76,3 +152,4 @@ const Header = ({ onMenuClick }: HeaderProps) => {
 };
 
 export default Header;
+
