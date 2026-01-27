@@ -12,7 +12,8 @@ import {
     Loader2,
     AlertCircle,
     CheckCircle2,
-    Map as MapIcon
+    Map as MapIcon,
+    Smartphone
 } from 'lucide-react';
 import { apiFetch } from '@/lib/api';
 
@@ -214,6 +215,116 @@ export default function SettingsPage() {
                         </div>
                     )}
 
+                    {/* OTP & External Services */}
+                    {activeTab === 'api' && (
+                        <div className="card">
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '24px' }}>
+                                <Smartphone size={20} color="var(--primary)" />
+                                <h3 style={{ fontSize: '18px', fontWeight: '700', margin: 0 }}>OTP & SMS Configuration</h3>
+                            </div>
+
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+                                {/* OTP Service Mode */}
+                                <div style={{ background: '#f8fafc', padding: '20px', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+                                        <div>
+                                            <h4 style={{ fontSize: '15px', fontWeight: '700', margin: 0 }}>OTP Service Mode</h4>
+                                            <p style={{ fontSize: '13px', color: 'var(--text-muted)', margin: '4px 0 0 0' }}>
+                                                Switch between Development and Production modes.
+                                            </p>
+                                        </div>
+                                        <div style={{ display: 'flex', gap: '8px' }}>
+                                            {['dev', 'production'].map((mode) => {
+                                                const currentMode = settings.find(s => s.key === 'otp_service')?.value;
+                                                return (
+                                                    <button
+                                                        key={mode}
+                                                        onClick={() => handleUpdate('otp_service', mode)}
+                                                        style={{
+                                                            padding: '6px 16px',
+                                                            borderRadius: '20px',
+                                                            fontSize: '12px',
+                                                            fontWeight: '700',
+                                                            textTransform: 'uppercase',
+                                                            background: currentMode === mode ? 'var(--primary)' : 'white',
+                                                            color: currentMode === mode ? 'white' : 'var(--text-muted)',
+                                                            border: `1px solid ${currentMode === mode ? 'var(--primary)' : '#e2e8f0'}`,
+                                                            cursor: 'pointer'
+                                                        }}
+                                                    >
+                                                        {mode}
+                                                    </button>
+                                                );
+                                            })}
+                                        </div>
+                                    </div>
+                                    <div style={{ padding: '12px', borderRadius: '8px', background: settings.find(s => s.key === 'otp_service')?.value === 'dev' ? '#fffbeb' : '#ecfdf5', color: settings.find(s => s.key === 'otp_service')?.value === 'dev' ? '#92400e' : '#065f46', fontSize: '12px', display: 'flex', gap: '8px', alignItems: 'flex-start' }}>
+                                        <AlertCircle size={14} style={{ marginTop: '2px' }} />
+                                        <span>
+                                            {settings.find(s => s.key === 'otp_service')?.value === 'dev'
+                                                ? "DEV MODE: OTPs are logged to console and returned in API response. SMS is NOT sent."
+                                                : "PRODUCTION MODE: OTPs are sent via ThaiBulkSMS API. API response is SECURED."}
+                                        </span>
+                                    </div>
+                                </div>
+
+                                {/* ThaiBulkSMS Credentials */}
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                                    {[
+                                        { key: 'thaibulksms_api_key', label: 'ThaiBulkSMS API Key', type: 'text' },
+                                        { key: 'thaibulksms_api_secret', label: 'ThaiBulkSMS API Secret', type: 'password' },
+                                        { key: 'thaibulksms_sender_id', label: 'ThaiBulkSMS Sender ID', type: 'text' }
+                                    ].map((field) => {
+                                        const setting = settings.find(s => s.key === field.key);
+                                        if (!setting) return null;
+                                        return (
+                                            <div key={field.key} style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                                    <label style={{ fontSize: '14px', fontWeight: '600', color: 'var(--text-main)' }}>
+                                                        {field.label}
+                                                    </label>
+                                                    <button
+                                                        onClick={() => handleUpdate(field.key, setting.value)}
+                                                        disabled={saving}
+                                                        style={{
+                                                            fontSize: '12px',
+                                                            fontWeight: '700',
+                                                            color: 'var(--primary)',
+                                                            background: 'transparent',
+                                                            border: 'none',
+                                                            cursor: 'pointer',
+                                                            display: 'flex',
+                                                            alignItems: 'center',
+                                                            gap: '4px'
+                                                        }}
+                                                    >
+                                                        {saving ? <RefreshCw size={12} className="animate-spin" /> : <Save size={12} />}
+                                                        Save
+                                                    </button>
+                                                </div>
+                                                <input
+                                                    type={field.type}
+                                                    value={setting.value}
+                                                    onChange={(e) => setSettings(settings.map(s => s.key === field.key ? { ...s, value: e.target.value } : s))}
+                                                    placeholder={`Enter ${field.label}...`}
+                                                    style={{
+                                                        padding: '10px 16px',
+                                                        borderRadius: '10px',
+                                                        border: '1px solid #e2e8f0',
+                                                        background: '#f8fafc',
+                                                        fontSize: '14px',
+                                                        color: 'var(--text-main)',
+                                                        outline: 'none'
+                                                    }}
+                                                />
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
                     {/* Financial Parameters */}
                     {activeTab === 'financial' && (
                         <div className="card">
@@ -222,7 +333,7 @@ export default function SettingsPage() {
                                 <h3 style={{ fontSize: '18px', fontWeight: '700', margin: 0 }}>Financial Parameters</h3>
                             </div>
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-                                {settings.map((setting) => (
+                                {settings.filter(s => ['commission_rate', 'minimum_withdrawal', 'base_fare'].includes(s.key)).map((setting) => (
                                     <div key={setting.key} style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                                             <label style={{ fontSize: '14px', fontWeight: '600', color: 'var(--text-main)' }}>
@@ -266,6 +377,54 @@ export default function SettingsPage() {
                                         )}
                                     </div>
                                 ))}
+                                {settings.filter(s => !['commission_rate', 'minimum_withdrawal', 'base_fare', 'otp_service', 'thaibulksms_api_key', 'thaibulksms_api_secret', 'thaibulksms_sender_id'].includes(s.key)).length > 0 && (
+                                    <div style={{ marginTop: '12px', borderTop: '1px solid #e2e8f0', paddingTop: '20px' }}>
+                                        <h4 style={{ fontSize: '14px', fontWeight: '700', color: 'var(--text-muted)', marginBottom: '16px' }}>Other Settings</h4>
+                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                                            {settings.filter(s => !['commission_rate', 'minimum_withdrawal', 'base_fare', 'otp_service', 'thaibulksms_api_key', 'thaibulksms_api_secret', 'thaibulksms_sender_id'].includes(s.key)).map((setting) => (
+                                                <div key={setting.key} style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                                        <label style={{ fontSize: '14px', fontWeight: '600', color: 'var(--text-main)' }}>
+                                                            {setting.key.replace(/_/g, ' ').toUpperCase()}
+                                                        </label>
+                                                        <button
+                                                            onClick={() => handleUpdate(setting.key, setting.value)}
+                                                            disabled={saving}
+                                                            style={{
+                                                                fontSize: '12px',
+                                                                fontWeight: '700',
+                                                                color: 'var(--primary)',
+                                                                background: 'transparent',
+                                                                border: 'none',
+                                                                cursor: 'pointer',
+                                                                display: 'flex',
+                                                                alignItems: 'center',
+                                                                gap: '4px'
+                                                            }}
+                                                        >
+                                                            {saving ? <RefreshCw size={12} className="animate-spin" /> : <Save size={12} />}
+                                                            Update
+                                                        </button>
+                                                    </div>
+                                                    <input
+                                                        type="text"
+                                                        value={setting.value}
+                                                        onChange={(e) => setSettings(settings.map(s => s.key === setting.key ? { ...s, value: e.target.value } : s))}
+                                                        style={{
+                                                            padding: '10px 16px',
+                                                            borderRadius: '10px',
+                                                            border: '1px solid #e2e8f0',
+                                                            background: '#f8fafc',
+                                                            fontSize: '14px',
+                                                            color: 'var(--text-main)',
+                                                            outline: 'none'
+                                                        }}
+                                                    />
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
                             </div>
                         </div>
                     )}
