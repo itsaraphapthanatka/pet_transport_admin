@@ -13,6 +13,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     const [loading, setLoading] = useState(true);
     const [isRedirecting, setIsRedirecting] = useState(false);
 
+    const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+
     useEffect(() => {
         // Prevent redirect loop
         if (isRedirecting) return;
@@ -52,9 +54,15 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
     return (
         <div className="admin-layout">
-            <Sidebar />
+            {/* Overlay for mobile sidebar */}
+            <div
+                className={`sidebar-overlay ${isSidebarOpen ? 'visible' : ''}`}
+                onClick={() => setIsSidebarOpen(false)}
+            />
+
+            <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
             <main className="main-content">
-                <Header />
+                <Header onMenuClick={() => setIsSidebarOpen(true)} />
                 <div className="page-container">
                     {children}
                 </div>

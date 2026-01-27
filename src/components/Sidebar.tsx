@@ -13,10 +13,16 @@ import {
     Map as MapIcon,
     ShieldCheck,
     LogOut,
-    PawPrint
+    PawPrint,
+    X
 } from 'lucide-react';
 
-const Sidebar = () => {
+interface SidebarProps {
+    isOpen?: boolean;
+    onClose?: () => void;
+}
+
+const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
     const pathname = usePathname();
     const router = useRouter();
 
@@ -55,12 +61,28 @@ const Sidebar = () => {
     const filteredMenuItems = menuItems.filter(item => item.roles.includes(role));
 
     return (
-        <aside className="sidebar">
-            <div className="sidebar-logo">
-                <div style={{ background: 'var(--primary)', padding: '6px', borderRadius: '8px' }}>
-                    <PawPrint size={24} color="white" />
+        <aside className={`sidebar ${isOpen ? 'open' : ''}`}>
+            <div className="sidebar-logo" style={{ justifyContent: 'space-between' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                    <div style={{ background: 'var(--primary)', padding: '6px', borderRadius: '8px' }}>
+                        <PawPrint size={24} color="white" />
+                    </div>
+                    <h1>PetGo Admin</h1>
                 </div>
-                <h1>PetGo Admin</h1>
+                {/* Close button for mobile */}
+                <button
+                    onClick={onClose}
+                    style={{
+                        background: 'transparent',
+                        border: 'none',
+                        color: 'var(--text-on-sidebar)',
+                        cursor: 'pointer',
+                        display: isOpen ? 'block' : 'none' // Only show when open (implied mobile)
+                    }}
+                    className="md:hidden" // Tailwind utility if available, or rely on JS/CSS
+                >
+                    <X size={24} />
+                </button>
             </div>
 
             <nav className="flex-1">
@@ -69,7 +91,11 @@ const Sidebar = () => {
                         const isActive = pathname === item.href;
                         return (
                             <li key={item.name}>
-                                <Link href={item.href} className={`nav-item ${isActive ? 'active' : ''}`}>
+                                <Link
+                                    href={item.href}
+                                    className={`nav-item ${isActive ? 'active' : ''}`}
+                                    onClick={() => onClose?.()} // Close sidebar on nav click
+                                >
                                     <item.icon size={18} />
                                     <span>{item.name}</span>
                                 </Link>

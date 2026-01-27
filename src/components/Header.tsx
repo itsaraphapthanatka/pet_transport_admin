@@ -1,11 +1,18 @@
 "use client";
 
 import React from 'react';
-import { Search, Bell, User } from 'lucide-react';
+import { Search, Bell, User, Menu } from 'lucide-react';
 
-const Header = () => {
+interface HeaderProps {
+    onMenuClick?: () => void;
+}
+
+const Header = ({ onMenuClick }: HeaderProps) => {
     return (
         <header className="header">
+            <button className="menu-btn" onClick={onMenuClick}>
+                <Menu size={24} />
+            </button>
             <div className="search-bar" style={{
                 display: 'flex',
                 alignItems: 'center',
