@@ -34,6 +34,7 @@ export default function AdminsPage() {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [role, setRole] = useState("admin");
+    const [saving, setSaving] = useState(false);
 
     useEffect(() => {
         const token = localStorage.getItem('admin_token');
@@ -116,6 +117,7 @@ export default function AdminsPage() {
                 await adminService.deleteAdmin(id);
                 Swal.fire("Deleted!", "Admin has been deleted.", "success");
                 fetchAdmins();
+                resetForm();
             } catch (error) {
                 Swal.fire("Error!", "Failed to delete admin.", "error");
             }
@@ -124,6 +126,7 @@ export default function AdminsPage() {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+        setSaving(true);
         try {
             if (editingAdmin) {
                 // Update
@@ -166,7 +169,10 @@ export default function AdminsPage() {
             resetForm();
             fetchAdmins();
         } catch (error: any) {
+            console.error("Form error:", error);
             Swal.fire("Error", error.response?.data?.detail || "Operation failed", "error");
+        } finally {
+            setSaving(false);
         }
     };
 
@@ -420,127 +426,79 @@ export default function AdminsPage() {
                         </div>
 
                         <form onSubmit={handleSubmit} style={{ padding: '24px' }}>
-                            <div style={{ marginBottom: '16px' }}>
-                                <label style={{ display: 'block', fontSize: '14px', fontWeight: '600', color: '#334155', marginBottom: '6px' }}>
+                            <div className="form-group">
+                                <label className="label">
                                     Full Name
                                 </label>
                                 <input
                                     type="text"
+                                    className="input"
                                     value={fullName}
                                     onChange={(e) => setFullName(e.target.value)}
                                     placeholder="e.g. John Doe"
-                                    style={{
-                                        width: '100%',
-                                        padding: '10px 12px',
-                                        borderRadius: '8px',
-                                        border: '1px solid #cbd5e1',
-                                        fontSize: '14px',
-                                        outline: 'none'
-                                    }}
                                     required
                                 />
                             </div>
 
-                            <div style={{ marginBottom: '16px' }}>
-                                <label style={{ display: 'block', fontSize: '14px', fontWeight: '600', color: '#334155', marginBottom: '6px' }}>
+                            <div className="form-group">
+                                <label className="label">
                                     Email Address
                                 </label>
                                 <input
                                     type="email"
+                                    className="input"
                                     value={email}
                                     onChange={(e) => setEmail(e.target.value)}
                                     placeholder="admin@petgo.com"
-                                    style={{
-                                        width: '100%',
-                                        padding: '10px 12px',
-                                        borderRadius: '8px',
-                                        border: '1px solid #cbd5e1',
-                                        fontSize: '14px',
-                                        outline: 'none'
-                                    }}
                                     required
                                 />
                             </div>
 
-                            <div style={{ marginBottom: '16px' }}>
-                                <label style={{ display: 'block', fontSize: '14px', fontWeight: '600', color: '#334155', marginBottom: '6px' }}>
+                            <div className="form-group">
+                                <label className="label">
                                     Role
                                 </label>
-                                <div style={{ position: 'relative' }}>
-                                    <select
-                                        value={role}
-                                        onChange={(e) => setRole(e.target.value)}
-                                        style={{
-                                            width: '100%',
-                                            padding: '10px 12px',
-                                            borderRadius: '8px',
-                                            border: '1px solid #cbd5e1',
-                                            fontSize: '14px',
-                                            outline: 'none',
-                                            appearance: 'none',
-                                            background: 'white'
-                                        }}
-                                    >
-                                        <option value="admin">Administrator</option>
-                                        <option value="super_admin">Super Admin</option>
-                                        <option value="moderator">Moderator</option>
-                                    </select>
-                                    <Shield size={16} color="#64748b" style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} />
-                                </div>
+                                <select
+                                    className="input"
+                                    value={role}
+                                    onChange={(e) => setRole(e.target.value)}
+                                >
+                                    <option value="admin">Administrator</option>
+                                    <option value="super_admin">Super Admin</option>
+                                    <option value="moderator">Moderator</option>
+                                </select>
                             </div>
 
-                            <div style={{ marginBottom: '24px' }}>
-                                <label style={{ display: 'block', fontSize: '14px', fontWeight: '600', color: '#334155', marginBottom: '6px' }}>
-                                    Password {editingAdmin && <span style={{ fontWeight: '400', color: '#94a3b8' }}>(Leave blank to keep current)</span>}
+                            <div className="form-group">
+                                <label className="label">
+                                    Password {editingAdmin && "(Leave blank to keep current)"}
                                 </label>
                                 <input
                                     type="password"
+                                    className="input"
                                     value={password}
                                     onChange={(e) => setPassword(e.target.value)}
                                     placeholder="••••••••"
-                                    style={{
-                                        width: '100%',
-                                        padding: '10px 12px',
-                                        borderRadius: '8px',
-                                        border: '1px solid #cbd5e1',
-                                        fontSize: '14px',
-                                        outline: 'none'
-                                    }}
                                     required={!editingAdmin}
                                 />
                             </div>
 
-                            <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
+                            <div style={{ display: 'flex', gap: '12px' }}>
                                 <button
                                     type="button"
                                     onClick={resetForm}
-                                    style={{
-                                        padding: '10px 20px',
-                                        borderRadius: '8px',
-                                        background: 'white',
-                                        border: '1px solid #e2e8f0',
-                                        fontSize: '14px',
-                                        fontWeight: '600',
-                                        color: '#64748b',
-                                        cursor: 'pointer'
-                                    }}
+                                    className="btn btn-secondary"
+                                    style={{ flex: 1 }}
                                 >
                                     Cancel
                                 </button>
                                 <button
                                     type="submit"
-                                    style={{
-                                        padding: '10px 24px',
-                                        borderRadius: '8px',
-                                        background: 'var(--primary)',
-                                        border: 'none',
-                                        fontSize: '14px',
-                                        fontWeight: '600',
-                                        color: 'white',
-                                        cursor: 'pointer'
-                                    }}
+                                    className="btn btn-primary"
+                                    style={{ flex: 1 }}
+                                    disabled={saving}
                                 >
-                                    {editingAdmin ? "Save Changes" : "Create Admin"}
+                                    {saving ? "Saving..." : (editingAdmin ? "Save Changes" : "Add Admin")}
                                 </button>
                             </div>
                         </form>

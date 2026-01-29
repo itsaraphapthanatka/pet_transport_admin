@@ -56,7 +56,7 @@ export default function UsersPage() {
                     <h2 style={{ fontSize: '24px', fontWeight: '800', color: 'var(--text-main)', marginBottom: '4px' }}>User Management</h2>
                     <p style={{ color: 'var(--text-muted)', fontSize: '14px' }}>View and manage registered customers.</p>
                 </div>
-                <button className="btn-primary" style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 20px', borderRadius: '10px', fontSize: '14px' }}>
+                <button className="btn btn-primary" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                     <UserPlus size={18} />
                     Register New User
                 </button>
@@ -79,21 +79,10 @@ export default function UsersPage() {
                             placeholder="Search customers..."
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
-                            style={{ background: 'transparent', border: 'none', outline: 'none', width: '100%', fontSize: '14px' }}
+                            style={{ background: 'transparent', border: 'none', outline: 'none', width: '100%', fontSize: '14px', height: '100%' }}
                         />
                     </div>
-                    <button style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '8px',
-                        padding: '10px 16px',
-                        background: 'white',
-                        border: '1px solid #e2e8f0',
-                        borderRadius: '10px',
-                        fontSize: '14px',
-                        fontWeight: '600',
-                        cursor: 'pointer'
-                    }}>
+                    <button className="btn btn-secondary" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                         <Filter size={18} />
                         Filter
                     </button>

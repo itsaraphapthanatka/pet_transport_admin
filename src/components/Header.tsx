@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Search, Bell, User, Menu, LogOut, Settings as SettingsIcon } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { apiFetch } from '@/lib/api';
 
 interface HeaderProps {
     onMenuClick?: () => void;
@@ -13,6 +14,28 @@ const Header = ({ onMenuClick }: HeaderProps) => {
     const [showUserMenu, setShowUserMenu] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
 
+    const [unreadCount, setUnreadCount] = useState(0);
+
+    const fetchUnreadCount = async () => {
+        try {
+            const res = await apiFetch('/notifications/');
+            if (res.ok) {
+                const data = await res.json();
+                const unread = data.filter((n: any) => !n.is_read).length;
+
+                // Play sound if new notification arrives
+                if (unread > unreadCount) {
+                    const audio = new Audio('/notification-sound.mp3');
+                    audio.play().catch(e => console.log('Audio play blocked'));
+                }
+
+                setUnreadCount(unread);
+            }
+        } catch (error) {
+            console.error('Error fetching notifications:', error);
+        }
+    };
+
     useEffect(() => {
         const storedUser = localStorage.getItem('admin_user');
         if (storedUser) {
@@ -22,7 +45,11 @@ const Header = ({ onMenuClick }: HeaderProps) => {
                 console.error("Error parsing admin user data", e);
             }
         }
-    }, []);
+
+        fetchUnreadCount();
+        const interval = setInterval(fetchUnreadCount, 15000); // Polling for badge
+        return () => clearInterval(interval);
+    }, [unreadCount]);
 
     const handleLogout = () => {
         localStorage.removeItem('admin_token');
@@ -73,16 +100,24 @@ const Header = ({ onMenuClick }: HeaderProps) => {
                 <Link href="/notifications">
                     <button style={{ background: 'transparent', border: 'none', position: 'relative', cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
                         <Bell size={20} color="var(--text-main)" />
-                        <span style={{
-                            position: 'absolute',
-                            top: '-2px',
-                            right: '-2px',
-                            background: '#ef4444',
-                            width: '8px',
-                            height: '8px',
-                            borderRadius: '50%',
-                            border: '2px solid white'
-                        }}></span>
+                        {unreadCount > 0 && (
+                            <span style={{
+                                position: 'absolute',
+                                top: '-8px',
+                                right: '-8px',
+                                background: '#ef4444',
+                                color: 'white',
+                                fontSize: '10px',
+                                padding: '2px 6px',
+                                borderRadius: '10px',
+                                fontWeight: '700',
+                                border: '2px solid white',
+                                minWidth: '18px',
+                                textAlign: 'center'
+                            }}>
+                                {unreadCount > 9 ? '9+' : unreadCount}
+                            </span>
+                        )}
                     </button>
                 </Link>
 

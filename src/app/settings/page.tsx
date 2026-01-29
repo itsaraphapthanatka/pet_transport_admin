@@ -13,9 +13,14 @@ import {
     AlertCircle,
     CheckCircle2,
     Map as MapIcon,
-    Smartphone
+    Smartphone,
+    History,
+    Search,
+    Filter,
+    Download,
 } from 'lucide-react';
 import { apiFetch } from '@/lib/api';
+
 
 export default function SettingsPage() {
     const [activeTab, setActiveTab] = useState('map');
@@ -25,6 +30,19 @@ export default function SettingsPage() {
     const [message, setMessage] = useState({ type: '', text: '' });
     const [mapProvider, setMapProvider] = useState<'google' | 'here' | 'longdo'>('google');
     const [loadingMap, setLoadingMap] = useState(false);
+    const [auditLogs, setAuditLogs] = useState<any[]>([]);
+    const [loadingLogs, setLoadingLogs] = useState(false);
+    const [user, setUser] = useState<any>(null);
+    const [searchQuery, setSearchQuery] = useState('');
+    const [filterAction, setFilterAction] = useState('');
+    const [filterTarget, setFilterTarget] = useState('');
+
+    useEffect(() => {
+        const storedUser = localStorage.getItem('admin_user');
+        if (storedUser) {
+            setUser(JSON.parse(storedUser));
+        }
+    }, []);
 
     useEffect(() => {
         async function fetchSettings() {
@@ -100,6 +118,58 @@ export default function SettingsPage() {
         }
     };
 
+    const fetchAuditLogs = async () => {
+        setLoadingLogs(true);
+        try {
+            const params = new URLSearchParams();
+            if (searchQuery) params.append('search', searchQuery);
+            if (filterAction) params.append('action', filterAction);
+            if (filterTarget) params.append('target_type', filterTarget);
+
+            const res = await apiFetch(`/admin/logs?${params.toString()}`);
+            if (res.ok) {
+                const data = await res.json();
+                setAuditLogs(data);
+            }
+        } catch (error) {
+            console.error('Error fetching audit logs:', error);
+        } finally {
+            setLoadingLogs(false);
+        }
+    };
+
+    useEffect(() => {
+        if (activeTab === 'audit') {
+            const timer = setTimeout(() => {
+                fetchAuditLogs();
+            }, 300); // Debounce search
+            return () => clearTimeout(timer);
+        }
+    }, [activeTab, searchQuery, filterAction, filterTarget]);
+
+    const handleExportLogs = async () => {
+        try {
+            const params = new URLSearchParams();
+            if (searchQuery) params.append('search', searchQuery);
+            if (filterAction) params.append('action', filterAction);
+            if (filterTarget) params.append('target_type', filterTarget);
+
+            const res = await apiFetch(`/admin/logs/export?${params.toString()}`);
+            if (res.ok) {
+                const blob = await res.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `audit_logs_${new Date().toISOString().split('T')[0]}.csv`;
+                document.body.appendChild(a);
+                a.click();
+                a.remove();
+            }
+        } catch (error) {
+            console.error('Error exporting logs:', error);
+        }
+    };
+
     if (loading) {
         return (
             <div style={{ height: '60vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -142,7 +212,13 @@ export default function SettingsPage() {
                         { id: 'security', label: 'Security', icon: Shield },
                         { id: 'notifications', label: 'Notifications', icon: Bell },
                         { id: 'api', label: 'API & External', icon: Globe },
-                    ].map((item) => (
+                        { id: 'audit', label: 'Audit Log', icon: History },
+                    ].filter(item => {
+                        if (item.id === 'audit') {
+                            return user?.role === 'super_admin';
+                        }
+                        return true;
+                    }).map((item) => (
                         <button key={item.id} onClick={() => setActiveTab(item.id)} style={{
                             display: 'flex',
                             alignItems: 'center',
@@ -164,6 +240,49 @@ export default function SettingsPage() {
                 </div>
 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+                    {/* General Settings */}
+                    {activeTab === 'general' && (
+                        <div className="card">
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '24px' }}>
+                                <SettingsIcon size={20} color="var(--primary)" />
+                                <h3 style={{ fontSize: '18px', fontWeight: '700', margin: 0 }}>General Settings</h3>
+                            </div>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                                {[
+                                    { key: 'app_name', label: 'Application Name', type: 'text' },
+                                    { key: 'contact_email', label: 'Support Email', type: 'email' },
+                                    { key: 'contact_phone', label: 'Support Phone', type: 'text' },
+                                    { key: 'line_id', label: 'Official Line ID', type: 'text' },
+                                ].map((field) => {
+                                    const setting = settings.find(s => s.key === field.key);
+                                    if (!setting) return null;
+                                    return (
+                                        <div key={field.key} style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                                <label className="label">{field.label}</label>
+                                                <button
+                                                    onClick={() => handleUpdate(field.key, setting.value)}
+                                                    disabled={saving}
+                                                    className="btn"
+                                                    style={{ fontSize: '12px', fontWeight: '700', color: 'var(--primary)', background: 'transparent', border: 'none', padding: '4px 8px' }}
+                                                >
+                                                    {saving ? <RefreshCw size={12} className="animate-spin" /> : <Save size={12} />}
+                                                    Update
+                                                </button>
+                                            </div>
+                                            <input
+                                                type={field.type}
+                                                className="input"
+                                                value={setting.value}
+                                                onChange={(e) => setSettings(settings.map(s => s.key === field.key ? { ...s, value: e.target.value } : s))}
+                                            />
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        </div>
+                    )}
+
                     {/* Map Provider Configuration */}
                     {activeTab === 'map' && (
                         <div className="card">
@@ -280,22 +399,20 @@ export default function SettingsPage() {
                                         return (
                                             <div key={field.key} style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                                                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                                    <label style={{ fontSize: '14px', fontWeight: '600', color: 'var(--text-main)' }}>
+                                                    <label className="label">
                                                         {field.label}
                                                     </label>
                                                     <button
                                                         onClick={() => handleUpdate(field.key, setting.value)}
                                                         disabled={saving}
+                                                        className="btn"
                                                         style={{
                                                             fontSize: '12px',
                                                             fontWeight: '700',
                                                             color: 'var(--primary)',
                                                             background: 'transparent',
                                                             border: 'none',
-                                                            cursor: 'pointer',
-                                                            display: 'flex',
-                                                            alignItems: 'center',
-                                                            gap: '4px'
+                                                            padding: '4px 8px'
                                                         }}
                                                     >
                                                         {saving ? <RefreshCw size={12} className="animate-spin" /> : <Save size={12} />}
@@ -304,23 +421,135 @@ export default function SettingsPage() {
                                                 </div>
                                                 <input
                                                     type={field.type}
+                                                    className="input"
                                                     value={setting.value}
                                                     onChange={(e) => setSettings(settings.map(s => s.key === field.key ? { ...s, value: e.target.value } : s))}
                                                     placeholder={`Enter ${field.label}...`}
-                                                    style={{
-                                                        padding: '10px 16px',
-                                                        borderRadius: '10px',
-                                                        border: '1px solid #e2e8f0',
-                                                        background: '#f8fafc',
-                                                        fontSize: '14px',
-                                                        color: 'var(--text-main)',
-                                                        outline: 'none'
-                                                    }}
                                                 />
                                             </div>
                                         );
                                     })}
                                 </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Notification Settings */}
+                    {activeTab === 'notifications' && (
+                        <div className="card">
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
+                                <Bell size={20} color="var(--primary)" />
+                                <h3 style={{ fontSize: '18px', fontWeight: '700', margin: 0 }}>Notification Configuration</h3>
+                            </div>
+                            <p style={{ fontSize: '14px', color: 'var(--text-muted)', marginBottom: '24px' }}>
+                                Configure Firebase Cloud Messaging (FCM) for push notifications to Customer and Driver apps.
+                            </p>
+
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+                                {/* Push Toggle */}
+                                <div style={{ background: '#f8fafc', padding: '20px', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                        <div>
+                                            <h4 style={{ fontSize: '15px', fontWeight: '700', margin: 0 }}>Push Notifications</h4>
+                                            <p style={{ fontSize: '13px', color: 'var(--text-muted)', margin: '4px 0 0 0' }}>
+                                                Global toggle for all mobile push notifications.
+                                            </p>
+                                        </div>
+                                        <button
+                                            onClick={() => {
+                                                const current = settings.find(s => s.key === 'enable_push_notifications')?.value;
+                                                handleUpdate('enable_push_notifications', current === 'true' ? 'false' : 'true');
+                                            }}
+                                            style={{
+                                                width: '48px',
+                                                height: '24px',
+                                                borderRadius: '12px',
+                                                background: settings.find(s => s.key === 'enable_push_notifications')?.value === 'true' ? 'var(--primary)' : '#cbd5e1',
+                                                border: 'none',
+                                                position: 'relative',
+                                                cursor: 'pointer',
+                                                transition: 'all 0.2s'
+                                            }}
+                                        >
+                                            <div style={{
+                                                width: '18px',
+                                                height: '18px',
+                                                borderRadius: '50%',
+                                                background: 'white',
+                                                position: 'absolute',
+                                                top: '3px',
+                                                left: settings.find(s => s.key === 'enable_push_notifications')?.value === 'true' ? '27px' : '3px',
+                                                transition: 'all 0.2s'
+                                            }} />
+                                        </button>
+                                    </div>
+                                </div>
+
+                                {/* FCM Server Key */}
+                                {['fcm_server_key'].map((key) => {
+                                    const setting = settings.find(s => s.key === key);
+                                    if (!setting) return null;
+                                    return (
+                                        <div key={key} style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                                <label className="label">Firebase Cloud Messaging (FCM) Server Key</label>
+                                                <button
+                                                    onClick={() => handleUpdate(key, setting.value)}
+                                                    disabled={saving}
+                                                    className="btn"
+                                                    style={{ fontSize: '12px', fontWeight: '700', color: 'var(--primary)', background: 'transparent', border: 'none', padding: '4px 8px' }}
+                                                >
+                                                    {saving ? <RefreshCw size={12} className="animate-spin" /> : <Save size={12} />}
+                                                    Update
+                                                </button>
+                                            </div>
+                                            <input
+                                                type="password"
+                                                className="input"
+                                                value={setting.value}
+                                                onChange={(e) => setSettings(settings.map(s => s.key === key ? { ...s, value: e.target.value } : s))}
+                                                placeholder="Enter FCM Server Key..."
+                                            />
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Security Settings */}
+                    {activeTab === 'security' && (
+                        <div className="card">
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '24px' }}>
+                                <Shield size={20} color="var(--primary)" />
+                                <h3 style={{ fontSize: '18px', fontWeight: '700', margin: 0 }}>Security & Session Policies</h3>
+                            </div>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                                {settings.filter(s => ['session_timeout_minutes'].includes(s.key)).map((setting) => (
+                                    <div key={setting.key} style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                            <label className="label">
+                                                {setting.key.replace(/_/g, ' ')} (Minutes)
+                                            </label>
+                                            <button
+                                                onClick={() => handleUpdate(setting.key, setting.value)}
+                                                disabled={saving}
+                                                className="btn"
+                                                style={{ fontSize: '12px', fontWeight: '700', color: 'var(--primary)', background: 'transparent', border: 'none', padding: '4px 8px' }}
+                                            >
+                                                {saving ? <RefreshCw size={12} className="animate-spin" /> : <Save size={12} />}
+                                                Update
+                                            </button>
+                                        </div>
+                                        <input
+                                            type="number"
+                                            className="input"
+                                            value={setting.value}
+                                            onChange={(e) => setSettings(settings.map(s => s.key === setting.key ? { ...s, value: e.target.value } : s))}
+                                        />
+                                        <p style={{ fontSize: '12px', color: 'var(--text-muted)' }}>{setting.description}</p>
+                                    </div>
+                                ))}
                             </div>
                         </div>
                     )}
@@ -336,22 +565,20 @@ export default function SettingsPage() {
                                 {settings.filter(s => ['commission_rate', 'minimum_withdrawal', 'base_fare'].includes(s.key)).map((setting) => (
                                     <div key={setting.key} style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                            <label style={{ fontSize: '14px', fontWeight: '600', color: 'var(--text-main)' }}>
-                                                {setting.key.replace(/_/g, ' ').toUpperCase()}
+                                            <label className="label">
+                                                {setting.key.replace(/_/g, ' ')}
                                             </label>
                                             <button
                                                 onClick={() => handleUpdate(setting.key, setting.value)}
                                                 disabled={saving}
+                                                className="btn"
                                                 style={{
                                                     fontSize: '12px',
                                                     fontWeight: '700',
                                                     color: 'var(--primary)',
                                                     background: 'transparent',
                                                     border: 'none',
-                                                    cursor: 'pointer',
-                                                    display: 'flex',
-                                                    alignItems: 'center',
-                                                    gap: '4px'
+                                                    padding: '4px 8px'
                                                 }}
                                             >
                                                 {saving ? <RefreshCw size={12} className="animate-spin" /> : <Save size={12} />}
@@ -360,46 +587,36 @@ export default function SettingsPage() {
                                         </div>
                                         <input
                                             type="text"
+                                            className="input"
                                             value={setting.value}
                                             onChange={(e) => setSettings(settings.map(s => s.key === setting.key ? { ...s, value: e.target.value } : s))}
-                                            style={{
-                                                padding: '10px 16px',
-                                                borderRadius: '10px',
-                                                border: '1px solid #e2e8f0',
-                                                background: '#f8fafc',
-                                                fontSize: '14px',
-                                                color: 'var(--text-main)',
-                                                outline: 'none'
-                                            }}
                                         />
                                         {setting.description && (
                                             <p style={{ fontSize: '12px', color: 'var(--text-muted)' }}>{setting.description}</p>
                                         )}
                                     </div>
                                 ))}
-                                {settings.filter(s => !['commission_rate', 'minimum_withdrawal', 'base_fare', 'otp_service', 'thaibulksms_api_key', 'thaibulksms_api_secret', 'thaibulksms_sender_id'].includes(s.key)).length > 0 && (
+                                {settings.filter(s => !['commission_rate', 'minimum_withdrawal', 'base_fare', 'otp_service', 'thaibulksms_api_key', 'thaibulksms_api_secret', 'thaibulksms_sender_id', 'app_name', 'contact_email', 'contact_phone', 'line_id', 'fcm_server_key', 'enable_push_notifications', 'session_timeout_minutes'].includes(s.key)).length > 0 && (
                                     <div style={{ marginTop: '12px', borderTop: '1px solid #e2e8f0', paddingTop: '20px' }}>
                                         <h4 style={{ fontSize: '14px', fontWeight: '700', color: 'var(--text-muted)', marginBottom: '16px' }}>Other Settings</h4>
                                         <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-                                            {settings.filter(s => !['commission_rate', 'minimum_withdrawal', 'base_fare', 'otp_service', 'thaibulksms_api_key', 'thaibulksms_api_secret', 'thaibulksms_sender_id'].includes(s.key)).map((setting) => (
+                                            {settings.filter(s => !['commission_rate', 'minimum_withdrawal', 'base_fare', 'otp_service', 'thaibulksms_api_key', 'thaibulksms_api_secret', 'thaibulksms_sender_id', 'app_name', 'contact_email', 'contact_phone', 'line_id', 'fcm_server_key', 'enable_push_notifications', 'session_timeout_minutes'].includes(s.key)).map((setting) => (
                                                 <div key={setting.key} style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                                                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                                        <label style={{ fontSize: '14px', fontWeight: '600', color: 'var(--text-main)' }}>
-                                                            {setting.key.replace(/_/g, ' ').toUpperCase()}
+                                                        <label className="label">
+                                                            {setting.key.replace(/_/g, ' ')}
                                                         </label>
                                                         <button
                                                             onClick={() => handleUpdate(setting.key, setting.value)}
                                                             disabled={saving}
+                                                            className="btn"
                                                             style={{
                                                                 fontSize: '12px',
                                                                 fontWeight: '700',
                                                                 color: 'var(--primary)',
                                                                 background: 'transparent',
                                                                 border: 'none',
-                                                                cursor: 'pointer',
-                                                                display: 'flex',
-                                                                alignItems: 'center',
-                                                                gap: '4px'
+                                                                padding: '4px 8px'
                                                             }}
                                                         >
                                                             {saving ? <RefreshCw size={12} className="animate-spin" /> : <Save size={12} />}
@@ -408,17 +625,9 @@ export default function SettingsPage() {
                                                     </div>
                                                     <input
                                                         type="text"
+                                                        className="input"
                                                         value={setting.value}
                                                         onChange={(e) => setSettings(settings.map(s => s.key === setting.key ? { ...s, value: e.target.value } : s))}
-                                                        style={{
-                                                            padding: '10px 16px',
-                                                            borderRadius: '10px',
-                                                            border: '1px solid #e2e8f0',
-                                                            background: '#f8fafc',
-                                                            fontSize: '14px',
-                                                            color: 'var(--text-main)',
-                                                            outline: 'none'
-                                                        }}
                                                     />
                                                 </div>
                                             ))}
@@ -429,15 +638,207 @@ export default function SettingsPage() {
                         </div>
                     )}
 
-                    <div className="card" style={{ background: '#f8fafc', border: '1px dashed #cbd5e1' }}>
-                        <div style={{ textAlign: 'center', padding: '24px' }}>
-                            <Shield size={32} color="var(--text-muted)" style={{ margin: '0 auto 12px' }} />
-                            <p style={{ fontSize: '14px', fontWeight: '600' }}>Administrative Audit Log</p>
-                            <p style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '4px' }}>
-                                All changes to system settings are recorded and attributed to your administrator account.
-                            </p>
+
+
+                    {/* Audit Logs */}
+                    {activeTab === 'audit' && (
+                        <div className="card">
+                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '24px' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                                    <History size={20} color="var(--primary)" />
+                                    <h3 style={{ fontSize: '18px', fontWeight: '700', margin: 0 }}>System Audit Logs</h3>
+                                </div>
+                                <div style={{ display: 'flex', gap: '8px' }}>
+                                    <button
+                                        onClick={handleExportLogs}
+                                        style={{
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            gap: '6px',
+                                            padding: '8px 16px',
+                                            fontSize: '13px',
+                                            fontWeight: '600',
+                                            borderRadius: '8px',
+                                            border: '1px solid #e2e8f0',
+                                            background: 'white',
+                                            color: 'var(--text-main)',
+                                            cursor: 'pointer',
+                                            transition: 'all 0.2s'
+                                        }}
+                                        onMouseOver={(e) => e.currentTarget.style.background = '#f8fafc'}
+                                        onMouseOut={(e) => e.currentTarget.style.background = 'white'}
+                                    >
+                                        <Download size={14} />
+                                        Export CSV
+                                    </button>
+                                    <button
+                                        onClick={() => {
+                                            console.log('Refreshing logs...');
+                                            fetchAuditLogs();
+                                        }}
+                                        disabled={loadingLogs}
+                                        style={{
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            gap: '6px',
+                                            padding: '8px 16px',
+                                            fontSize: '13px',
+                                            fontWeight: '600',
+                                            borderRadius: '8px',
+                                            border: 'none',
+                                            background: 'var(--primary)',
+                                            color: 'white',
+                                            cursor: loadingLogs ? 'not-allowed' : 'pointer',
+                                            transition: 'all 0.2s',
+                                            opacity: loadingLogs ? 0.7 : 1
+                                        }}
+                                        onMouseOver={(e) => { if (!loadingLogs) e.currentTarget.style.filter = 'brightness(1.1)'; }}
+                                        onMouseOut={(e) => { if (!loadingLogs) e.currentTarget.style.filter = 'none'; }}
+                                    >
+                                        <RefreshCw size={14} className={loadingLogs ? 'animate-spin' : ''} />
+                                        {loadingLogs ? 'Refreshing...' : 'Refresh'}
+                                    </button>
+                                </div>
+                            </div>
+
+                            {/* Search and Filters */}
+                            <div style={{
+                                display: 'flex',
+                                gap: '12px',
+                                marginBottom: '24px',
+                                padding: '16px',
+                                background: '#f8fafc',
+                                borderRadius: '12px',
+                                flexWrap: 'wrap'
+                            }}>
+                                <div style={{ position: 'relative', flex: '1', minWidth: '200px' }}>
+                                    <Search size={16} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
+                                    <input
+                                        type="text"
+                                        placeholder="Search details, IP, or Target ID..."
+                                        className="input"
+                                        style={{ paddingLeft: '40px', fontSize: '14px' }}
+                                        value={searchQuery}
+                                        onChange={(e) => setSearchQuery(e.target.value)}
+                                    />
+                                </div>
+                                <div style={{ display: 'flex', gap: '8px', flex: '0 1 auto' }}>
+                                    <select
+                                        className="input"
+                                        style={{ width: '150px', fontSize: '13px' }}
+                                        value={filterAction}
+                                        onChange={(e) => setFilterAction(e.target.value)}
+                                    >
+                                        <option value="">All Actions</option>
+                                        <option value="verify_driver">Verify Driver</option>
+                                        <option value="reject_driver">Reject Driver</option>
+                                        <option value="admin_cancel_order">Admin Cancel</option>
+                                        <option value="update_settings">Update Settings</option>
+                                        <option value="upload_pet_image">Upload Photo</option>
+                                    </select>
+                                    <select
+                                        className="input"
+                                        style={{ width: '150px', fontSize: '13px' }}
+                                        value={filterTarget}
+                                        onChange={(e) => setFilterTarget(e.target.value)}
+                                    >
+                                        <option value="">All Targets</option>
+                                        <option value="driver">Driver</option>
+                                        <option value="order">Order</option>
+                                        <option value="settings">Settings</option>
+                                        <option value="pet_image">Pet Image</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            {loadingLogs && auditLogs.length === 0 ? (
+                                <div style={{ textAlign: 'center', padding: '40px' }}>
+                                    <Loader2 className="animate-spin" size={32} color="var(--primary)" style={{ margin: '0 auto' }} />
+                                </div>
+                            ) : (
+                                <div style={{ overflowX: 'auto' }}>
+                                    <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '14px' }}>
+                                        <thead>
+                                            <tr style={{ textAlign: 'left', color: 'var(--text-muted)', borderBottom: '1px solid #e2e8f0' }}>
+                                                <th style={{ padding: '12px', fontWeight: '600' }}>Time</th>
+                                                <th style={{ padding: '12px', fontWeight: '600' }}>Admin</th>
+                                                <th style={{ padding: '12px', fontWeight: '600' }}>Action</th>
+                                                <th style={{ padding: '12px', fontWeight: '600' }}>Target</th>
+                                                <th style={{ padding: '12px', fontWeight: '600' }}>Details</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {auditLogs.length === 0 ? (
+                                                <tr>
+                                                    <td colSpan={5} style={{ padding: '24px', textAlign: 'center', color: 'var(--text-muted)' }}>
+                                                        No matching logs found.
+                                                    </td>
+                                                </tr>
+                                            ) : (
+                                                auditLogs.map((log: any) => (
+                                                    <tr key={log.id} style={{ borderBottom: '1px solid #f1f5f9' }}>
+                                                        <td style={{ padding: '12px', whiteSpace: 'nowrap' }}>
+                                                            {new Date(log.created_at).toLocaleString()}
+                                                        </td>
+                                                        <td style={{ padding: '12px', whiteSpace: 'nowrap' }}>
+                                                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                                                <div style={{
+                                                                    width: '24px',
+                                                                    height: '24px',
+                                                                    borderRadius: '50%',
+                                                                    background: '#f1f5f9',
+                                                                    display: 'flex',
+                                                                    alignItems: 'center',
+                                                                    justifyContent: 'center',
+                                                                    fontSize: '10px',
+                                                                    fontWeight: '700',
+                                                                    color: 'var(--primary)'
+                                                                }}>
+                                                                    {log.admin?.full_name?.[0] || 'S'}
+                                                                </div>
+                                                                <span style={{ fontWeight: '600', color: 'var(--text-main)' }}>
+                                                                    {log.admin?.full_name || 'System'}
+                                                                </span>
+                                                            </div>
+                                                        </td>
+                                                        <td style={{ padding: '12px' }}>
+                                                            <span style={{
+                                                                padding: '4px 8px',
+                                                                borderRadius: '4px',
+                                                                background: '#eff6ff',
+                                                                color: 'var(--primary)',
+                                                                fontSize: '11px',
+                                                                fontWeight: '700',
+                                                                textTransform: 'uppercase'
+                                                            }}>
+                                                                {log.action?.replace(/_/g, ' ')}
+                                                            </span>
+                                                        </td>
+                                                        <td style={{ padding: '12px', whiteSpace: 'nowrap' }}>
+                                                            {log.target_type && (
+                                                                <span style={{ color: 'var(--text-main)', fontWeight: '600', fontSize: '13px' }}>
+                                                                    {log.target_type}
+                                                                </span>
+                                                            )}
+                                                            {log.target_id && (
+                                                                <span style={{ color: 'var(--text-muted)', marginLeft: '4px', fontSize: '12px' }}>
+                                                                    #{log.target_id}
+                                                                </span>
+                                                            )}
+                                                        </td>
+                                                        <td style={{ padding: '12px', fontSize: '13px', color: 'var(--text-muted)' }}>
+                                                            {log.details}
+                                                        </td>
+                                                    </tr>
+                                                ))
+                                            )}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            )}
                         </div>
-                    </div>
+                    )}
+
                 </div>
             </div>
         </div>

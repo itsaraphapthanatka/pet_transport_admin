@@ -55,6 +55,8 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
         { name: 'Verification', icon: ShieldCheck, href: '/verification', roles: ['super_admin', 'admin'] },
         { name: 'Notifications', icon: Bell, href: '/notifications', roles: ['super_admin', 'admin', 'moderator'] },
         { name: 'Admin Management', icon: Users, href: '/admins', roles: ['super_admin'] },
+        { name: 'Vehicle Types', icon: Car, href: '/settings/vehicle-types', roles: ['super_admin', 'admin'] },
+        { name: 'Pet Types', icon: PawPrint, href: '/settings/pet-types', roles: ['super_admin', 'admin'] },
         { name: 'Settings', icon: Settings, href: '/settings', roles: ['super_admin', 'admin'] },
     ];
 

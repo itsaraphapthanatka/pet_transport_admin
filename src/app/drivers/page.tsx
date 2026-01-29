@@ -9,7 +9,8 @@ import {
     ShieldCheck,
     ShieldAlert,
     Loader2,
-    ExternalLink
+    Edit2,
+    X,
 } from 'lucide-react';
 import { apiFetch } from '@/lib/api';
 
@@ -17,23 +18,70 @@ export default function DriversPage() {
     const [drivers, setDrivers] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
+    const [editingDriver, setEditingDriver] = useState<any>(null);
+    const [editFormData, setEditFormData] = useState({
+        full_name: '',
+        phone: '',
+        vehicle_type: '',
+        vehicle_plate: '',
+        is_verified: false,
+        wallet_balance: 0
+    });
+    const [updating, setUpdating] = useState(false);
 
     useEffect(() => {
-        async function fetchDrivers() {
-            try {
-                const res = await apiFetch('/drivers/');
-                if (res.ok) {
-                    const data = await res.json();
-                    setDrivers(data);
-                }
-            } catch (error) {
-                console.error('Error fetching drivers:', error);
-            } finally {
-                setLoading(false);
-            }
-        }
         fetchDrivers();
     }, []);
+
+    const fetchDrivers = async () => {
+        setLoading(true);
+        try {
+            const res = await apiFetch('/drivers/');
+            if (res.ok) {
+                const data = await res.json();
+                setDrivers(data);
+            }
+        } catch (error) {
+            console.error('Error fetching drivers:', error);
+        } finally {
+            setLoading(false);
+        }
+    }
+
+    const handleEdit = (driver: any) => {
+        setEditingDriver(driver);
+        setEditFormData({
+            full_name: driver.full_name || '',
+            phone: driver.phone || '',
+            vehicle_type: driver.vehicle_type || '',
+            vehicle_plate: driver.vehicle_plate || '',
+            is_verified: driver.is_verified || false,
+            wallet_balance: Number(driver.wallet_balance || 0)
+        });
+    };
+
+    const handleUpdate = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setUpdating(true);
+        try {
+            const res = await apiFetch(`/admin/drivers/${editingDriver.id}`, {
+                method: 'PUT',
+                body: JSON.stringify(editFormData)
+            });
+            if (res.ok) {
+                const updated = await res.json();
+                setDrivers(drivers.map(d => d.id === editingDriver.id ? updated : d));
+                setEditingDriver(null);
+            } else {
+                const err = await res.json();
+                alert(err.detail || 'Failed to update driver');
+            }
+        } catch (error) {
+            console.error('Error updating driver:', error);
+        } finally {
+            setUpdating(false);
+        }
+    };
 
     const filteredDrivers = drivers.filter(driver =>
         driver.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -60,6 +108,65 @@ export default function DriversPage() {
                     Add New Driver
                 </button>
             </div>
+
+            {/* Edit Modal */}
+            {editingDriver && (
+                <div style={{
+                    position: 'fixed',
+                    top: 0, left: 0, right: 0, bottom: 0,
+                    background: 'rgba(0,0,0,0.5)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    zIndex: 1000
+                }}>
+                    <div className="card" style={{ width: '500px', maxWidth: '90%' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '20px' }}>
+                            <h3 style={{ fontSize: '18px', fontWeight: '700' }}>Edit Driver</h3>
+                            <button onClick={() => setEditingDriver(null)} style={{ background: 'transparent', border: 'none', cursor: 'pointer' }}>
+                                <X size={20} />
+                            </button>
+                        </div>
+                        <form onSubmit={handleUpdate}>
+                            <div style={{ display: 'grid', gap: '16px' }}>
+                                <div className="form-group">
+                                    <label className="label">Full Name</label>
+                                    <input className="input" value={editFormData.full_name} onChange={e => setEditFormData({ ...editFormData, full_name: e.target.value })} />
+                                </div>
+                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                                    <div className="form-group">
+                                        <label className="label">Vehicle Type</label>
+                                        <select className="input" value={editFormData.vehicle_type} onChange={e => setEditFormData({ ...editFormData, vehicle_type: e.target.value })}>
+                                            <option value="car">Car</option>
+                                            <option value="suv">SUV</option>
+                                            <option value="van">Van</option>
+                                            <option value="bike">Bike</option>
+                                        </select>
+                                    </div>
+                                    <div className="form-group">
+                                        <label className="label">License Plate</label>
+                                        <input className="input" value={editFormData.vehicle_plate} onChange={e => setEditFormData({ ...editFormData, vehicle_plate: e.target.value })} />
+                                    </div>
+                                </div>
+                                <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+                                    <input type="checkbox" checked={editFormData.is_verified} onChange={e => setEditFormData({ ...editFormData, is_verified: e.target.checked })} />
+                                    <label style={{ fontSize: '14px', fontWeight: '600' }}>Verified Driver</label>
+                                </div>
+                                <div className="form-group">
+                                    <label className="label">Wallet Balance (฿)</label>
+                                    <input type="number" className="input" value={editFormData.wallet_balance} onChange={e => setEditFormData({ ...editFormData, wallet_balance: Number(e.target.value) })} />
+                                </div>
+                            </div>
+                            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', marginTop: '24px' }}>
+                                <button type="button" onClick={() => setEditingDriver(null)} className="btn btn-secondary">Cancel</button>
+                                <button type="submit" className="btn btn-primary" disabled={updating}>
+                                    {updating ? 'Saving...' : 'Save Changes'}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
 
             <div className="card" style={{ marginBottom: '24px', padding: '16px' }}>
                 <div style={{ display: 'flex', gap: '16px' }}>
@@ -175,7 +282,7 @@ export default function DriversPage() {
                                 </td>
                                 <td style={{ padding: '16px 24px', textAlign: 'right' }}>
                                     <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
-                                        <button style={{
+                                        <button onClick={() => handleEdit(driver)} style={{
                                             padding: '6px',
                                             borderRadius: '8px',
                                             background: 'transparent',
@@ -183,7 +290,7 @@ export default function DriversPage() {
                                             cursor: 'pointer',
                                             color: 'var(--text-muted)'
                                         }}>
-                                            <ExternalLink size={16} />
+                                            <Edit2 size={16} />
                                         </button>
                                         <button style={{
                                             padding: '6px',

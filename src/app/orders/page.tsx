@@ -86,18 +86,7 @@ export default function OrdersPage() {
                     <p style={{ color: 'var(--text-muted)', fontSize: '14px' }}>Monitor and manage all pet transport requests.</p>
                 </div>
                 <div style={{ display: 'flex', gap: '12px' }}>
-                    <button style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '8px',
-                        padding: '10px 20px',
-                        background: 'white',
-                        border: '1px solid #e2e8f0',
-                        borderRadius: '10px',
-                        fontSize: '14px',
-                        fontWeight: '600',
-                        cursor: 'pointer'
-                    }}>
+                    <button className="btn btn-secondary" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                         <Calendar size={18} />
                         Export CSV
                     </button>
@@ -142,21 +131,10 @@ export default function OrdersPage() {
                             placeholder="Search by Order ID, Customer, or Driver..."
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
-                            style={{ background: 'transparent', border: 'none', outline: 'none', width: '100%', fontSize: '14px' }}
+                            style={{ background: 'transparent', border: 'none', outline: 'none', width: '100%', fontSize: '14px', height: '100%' }}
                         />
                     </div>
-                    <button style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '8px',
-                        padding: '10px 16px',
-                        background: 'white',
-                        border: '1px solid #e2e8f0',
-                        borderRadius: '10px',
-                        fontSize: '14px',
-                        fontWeight: '600',
-                        cursor: 'pointer'
-                    }}>
+                    <button className="btn btn-secondary" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                         <Filter size={18} />
                         Status
                     </button>

@@ -6,11 +6,18 @@ let isRedirectingToLogin = false;
 export async function apiFetch(endpoint: string, options: RequestInit = {}) {
     const token = typeof window !== 'undefined' ? localStorage.getItem('admin_token') : null;
 
-    const headers = {
+    const headers: Record<string, string> = {
         'Content-Type': 'application/json',
         ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
-        ...options.headers,
     };
+
+    if (options.headers) {
+        Object.assign(headers, options.headers);
+    }
+
+    if (headers['Content-Type'] === 'none') {
+        delete headers['Content-Type'];
+    }
 
     const response = await fetch(`${API_URL}${endpoint}`, {
         ...options,
