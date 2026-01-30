@@ -36,13 +36,19 @@ export default function SettingsPage() {
     const [searchQuery, setSearchQuery] = useState('');
     const [filterAction, setFilterAction] = useState('');
     const [filterTarget, setFilterTarget] = useState('');
+    const [mounted, setMounted] = useState(false);
 
     useEffect(() => {
+        setMounted(true);
+    }, []);
+
+    useEffect(() => {
+        if (!mounted) return;
         const storedUser = localStorage.getItem('admin_user');
         if (storedUser) {
             setUser(JSON.parse(storedUser));
         }
-    }, []);
+    }, [mounted]);
 
     useEffect(() => {
         async function fetchSettings() {
@@ -209,6 +215,7 @@ export default function SettingsPage() {
                         { id: 'general', label: 'General', icon: SettingsIcon },
                         { id: 'map', label: 'Map Provider', icon: MapIcon },
                         { id: 'financial', label: 'Financial', icon: CreditCard },
+                        { id: 'payments', label: 'Payment Methods', icon: CreditCard },
                         { id: 'security', label: 'Security', icon: Shield },
                         { id: 'notifications', label: 'Notifications', icon: Bell },
                         { id: 'api', label: 'API & External', icon: Globe },
@@ -637,6 +644,97 @@ export default function SettingsPage() {
                             </div>
                         </div>
                     )}
+
+                    {/* Payment Methods */}
+                    {activeTab === 'payments' && (
+                        <div className="card">
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
+                                <CreditCard size={20} color="var(--primary)" />
+                                <h3 style={{ fontSize: '18px', fontWeight: '700', margin: 0 }}>Payment Methods Configuration</h3>
+                            </div>
+                            <p style={{ fontSize: '14px', color: 'var(--text-muted)', marginBottom: '24px' }}>
+                                Enable or disable specific payment methods for customers. Changes will reflect immediately in both Customer and Driver apps.
+                            </p>
+
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                                {[
+                                    { key: 'ENABLE_CASH_PAYMENT', label: 'Cash Payment', description: 'Allow customers to pay with cash upon delivery' },
+                                    { key: 'ENABLE_PROMPTPAY_PAYMENT', label: 'PromptPay', description: 'Allow customers to pay via PromptPay QR code' },
+                                    { key: 'ENABLE_WALLET_PAYMENT', label: 'Wallet Balance', description: 'Allow customers to pay using their wallet balance' },
+                                    { key: 'ENABLE_STRIPE_PAYMENT', label: 'Credit/Debit Card (Stripe)', description: 'Allow customers to pay with credit or debit cards via Stripe' },
+                                ].map((method) => {
+                                    const setting = settings.find(s => s.key === method.key);
+                                    if (!setting) return null;
+                                    const isEnabled = setting.value === 'true';
+
+                                    return (
+                                        <div key={method.key} style={{
+                                            background: '#f8fafc',
+                                            padding: '20px',
+                                            borderRadius: '12px',
+                                            border: '1px solid #e2e8f0'
+                                        }}>
+                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                                <div>
+                                                    <h4 style={{ fontSize: '15px', fontWeight: '700', margin: 0 }}>{method.label}</h4>
+                                                    <p style={{ fontSize: '13px', color: 'var(--text-muted)', margin: '4px 0 0 0' }}>
+                                                        {method.description}
+                                                    </p>
+                                                </div>
+                                                <button
+                                                    onClick={() => handleUpdate(method.key, isEnabled ? 'false' : 'true')}
+                                                    disabled={saving}
+                                                    style={{
+                                                        width: '48px',
+                                                        height: '24px',
+                                                        borderRadius: '12px',
+                                                        background: isEnabled ? 'var(--primary)' : '#cbd5e1',
+                                                        border: 'none',
+                                                        position: 'relative',
+                                                        cursor: saving ? 'not-allowed' : 'pointer',
+                                                        transition: 'all 0.2s',
+                                                        opacity: saving ? 0.6 : 1
+                                                    }}
+                                                >
+                                                    <div style={{
+                                                        width: '18px',
+                                                        height: '18px',
+                                                        borderRadius: '50%',
+                                                        background: 'white',
+                                                        position: 'absolute',
+                                                        top: '3px',
+                                                        left: isEnabled ? '27px' : '3px',
+                                                        transition: 'all 0.2s'
+                                                    }} />
+                                                </button>
+                                            </div>
+                                            {isEnabled && (
+                                                <div style={{
+                                                    marginTop: '12px',
+                                                    padding: '8px 12px',
+                                                    borderRadius: '8px',
+                                                    background: '#ecfdf5',
+                                                    color: '#065f46',
+                                                    fontSize: '12px',
+                                                    display: 'flex',
+                                                    gap: '8px',
+                                                    alignItems: 'center',
+                                                    fontWeight: '600'
+                                                }}>
+                                                    <CheckCircle2 size={14} />
+                                                    <span>Active - Available for all bookings</span>
+                                                </div>
+                                            )}
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        </div>
+                    )}
+
+
+
+                    {/* Audit Logs */}
 
 
 
