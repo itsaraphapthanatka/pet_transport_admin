@@ -1,6 +1,8 @@
 "use client";
 
 import React, { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import DriverVerificationModal from '@/components/DriverVerificationModal';
 import {
     Bell,
     Search,
@@ -16,9 +18,14 @@ import {
 import { apiFetch } from '@/lib/api';
 
 export default function NotificationsPage() {
+    const router = useRouter();
     const [notifications, setNotifications] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [filter, setFilter] = useState('all');
+
+    // Modal state
+    const [isVerificationModalOpen, setIsVerificationModalOpen] = useState(false);
+    const [selectedDriverId, setSelectedDriverId] = useState<number | null>(null);
 
     const fetchNotifications = async () => {
         try {
@@ -54,6 +61,11 @@ export default function NotificationsPage() {
         // Optimistic update
         setNotifications(notifications.map(n => ({ ...n, is_read: true })));
         // In real app, call bulk read endpoint
+    };
+
+    const handleVerificationComplete = (driverId: number, status: string) => {
+        // Optionally mark the notification as read or refresh
+        fetchNotifications();
     };
 
     const getIcon = (title: string, priority: string) => {
@@ -219,6 +231,15 @@ export default function NotificationsPage() {
                                 )}
                                 {notif.title.includes('ลงทะเบียน') && (
                                     <button
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            if (notif.driver_id) {
+                                                setSelectedDriverId(notif.driver_id);
+                                                setIsVerificationModalOpen(true);
+                                            } else {
+                                                router.push('/verification');
+                                            }
+                                        }}
                                         style={{ padding: '6px 12px', background: 'var(--primary)', color: 'white', border: 'none', borderRadius: '6px', fontSize: '12px', fontWeight: '600', cursor: 'pointer' }}
                                     >
                                         ตรวจสอบเอกสาร
@@ -252,6 +273,16 @@ export default function NotificationsPage() {
                     </div>
                 )}
             </div>
+
+            {/* Verification Modal */}
+            {selectedDriverId && (
+                <DriverVerificationModal
+                    driverId={selectedDriverId}
+                    isOpen={isVerificationModalOpen}
+                    onClose={() => setIsVerificationModalOpen(false)}
+                    onStatusChange={handleVerificationComplete}
+                />
+            )}
 
             <style jsx>{`
                 .card:hover {

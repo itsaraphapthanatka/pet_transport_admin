@@ -14,25 +14,28 @@ const Header = ({ onMenuClick }: HeaderProps) => {
     const [showUserMenu, setShowUserMenu] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
 
-    const [unreadCount, setUnreadCount] = useState(0);
+    const [counts, setCounts] = useState({
+        pending_drivers: 0,
+        unread_notifications: 0,
+        total: 0
+    });
 
-    const fetchUnreadCount = async () => {
+    const fetchBadgeCounts = async () => {
         try {
-            const res = await apiFetch('/notifications/');
+            const res = await apiFetch('/admin/badge-counts');
             if (res.ok) {
                 const data = await res.json();
-                const unread = data.filter((n: any) => !n.is_read).length;
 
-                // Play sound if new notification arrives
-                if (unread > unreadCount) {
+                // Play sound if counts increased
+                if (data.total > counts.total) {
                     const audio = new Audio('/notification-sound.mp3');
                     audio.play().catch(e => console.log('Audio play blocked'));
                 }
 
-                setUnreadCount(unread);
+                setCounts(data);
             }
         } catch (error) {
-            console.error('Error fetching notifications:', error);
+            console.error('Error fetching badge counts:', error);
         }
     };
 
@@ -46,10 +49,10 @@ const Header = ({ onMenuClick }: HeaderProps) => {
             }
         }
 
-        fetchUnreadCount();
-        const interval = setInterval(fetchUnreadCount, 15000); // Polling for badge
+        fetchBadgeCounts();
+        const interval = setInterval(fetchBadgeCounts, 10000); // Polling for badges every 10s
         return () => clearInterval(interval);
-    }, [unreadCount]);
+    }, [counts.total]);
 
     const handleLogout = () => {
         localStorage.removeItem('admin_token');
@@ -100,7 +103,7 @@ const Header = ({ onMenuClick }: HeaderProps) => {
                 <Link href="/notifications">
                     <button style={{ background: 'transparent', border: 'none', position: 'relative', cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
                         <Bell size={20} color="var(--text-main)" />
-                        {unreadCount > 0 && (
+                        {counts.unread_notifications > 0 && (
                             <span style={{
                                 position: 'absolute',
                                 top: '-8px',
@@ -115,7 +118,7 @@ const Header = ({ onMenuClick }: HeaderProps) => {
                                 minWidth: '18px',
                                 textAlign: 'center'
                             }}>
-                                {unreadCount > 9 ? '9+' : unreadCount}
+                                {counts.unread_notifications > 999 ? '999+' : counts.unread_notifications}
                             </span>
                         )}
                     </button>

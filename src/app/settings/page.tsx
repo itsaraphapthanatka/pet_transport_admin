@@ -603,44 +603,6 @@ export default function SettingsPage() {
                                         )}
                                     </div>
                                 ))}
-                                {settings.filter(s => !['commission_rate', 'minimum_withdrawal', 'base_fare', 'otp_service', 'thaibulksms_api_key', 'thaibulksms_api_secret', 'thaibulksms_sender_id', 'app_name', 'contact_email', 'contact_phone', 'line_id', 'fcm_server_key', 'enable_push_notifications', 'session_timeout_minutes'].includes(s.key)).length > 0 && (
-                                    <div style={{ marginTop: '12px', borderTop: '1px solid #e2e8f0', paddingTop: '20px' }}>
-                                        <h4 style={{ fontSize: '14px', fontWeight: '700', color: 'var(--text-muted)', marginBottom: '16px' }}>Other Settings</h4>
-                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-                                            {settings.filter(s => !['commission_rate', 'minimum_withdrawal', 'base_fare', 'otp_service', 'thaibulksms_api_key', 'thaibulksms_api_secret', 'thaibulksms_sender_id', 'app_name', 'contact_email', 'contact_phone', 'line_id', 'fcm_server_key', 'enable_push_notifications', 'session_timeout_minutes'].includes(s.key)).map((setting) => (
-                                                <div key={setting.key} style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                                        <label className="label">
-                                                            {setting.key.replace(/_/g, ' ')}
-                                                        </label>
-                                                        <button
-                                                            onClick={() => handleUpdate(setting.key, setting.value)}
-                                                            disabled={saving}
-                                                            className="btn"
-                                                            style={{
-                                                                fontSize: '12px',
-                                                                fontWeight: '700',
-                                                                color: 'var(--primary)',
-                                                                background: 'transparent',
-                                                                border: 'none',
-                                                                padding: '4px 8px'
-                                                            }}
-                                                        >
-                                                            {saving ? <RefreshCw size={12} className="animate-spin" /> : <Save size={12} />}
-                                                            Update
-                                                        </button>
-                                                    </div>
-                                                    <input
-                                                        type="text"
-                                                        className="input"
-                                                        value={setting.value}
-                                                        onChange={(e) => setSettings(settings.map(s => s.key === setting.key ? { ...s, value: e.target.value } : s))}
-                                                    />
-                                                </div>
-                                            ))}
-                                        </div>
-                                    </div>
-                                )}
                             </div>
                         </div>
                     )}

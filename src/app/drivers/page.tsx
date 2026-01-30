@@ -224,21 +224,30 @@ export default function DriversPage() {
                                 <td style={{ padding: '16px 24px' }}>
                                     <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                                         <div style={{
-                                            width: '40px',
-                                            height: '40px',
-                                            borderRadius: '10px',
+                                            width: '44px',
+                                            height: '44px',
+                                            borderRadius: '12px',
                                             background: '#f1f5f9',
                                             display: 'flex',
                                             alignItems: 'center',
                                             justifyContent: 'center',
                                             color: 'var(--primary)',
-                                            fontWeight: '700'
+                                            fontWeight: '700',
+                                            overflow: 'hidden'
                                         }}>
-                                            {driver.full_name?.[0] || 'D'}
+                                            {driver.profile_image_url || driver.selfie_with_id_url ? (
+                                                <img
+                                                    src={`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}${driver.profile_image_url || driver.selfie_with_id_url}`}
+                                                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                                                />
+                                            ) : (
+                                                driver.full_name?.[0] || 'D'
+                                            )}
                                         </div>
                                         <div>
-                                            <p style={{ fontSize: '14px', fontWeight: '600', color: 'var(--text-main)' }}>{driver.full_name}</p>
-                                            <p style={{ fontSize: '12px', color: 'var(--text-muted)' }}>{driver.phone}</p>
+                                            <p style={{ fontSize: '14px', fontWeight: '700', color: 'var(--text-main)' }}>{driver.full_name}</p>
+                                            <p style={{ fontSize: '11px', color: 'var(--text-muted)', marginBottom: '2px' }}>{driver.email}</p>
+                                            <p style={{ fontSize: '11px', color: 'var(--text-muted)' }}>{driver.phone}</p>
                                         </div>
                                     </div>
                                 </td>

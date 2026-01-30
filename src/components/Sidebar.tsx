@@ -17,6 +17,8 @@ import {
     X
 } from 'lucide-react';
 
+import { apiFetch } from '@/lib/api';
+
 interface SidebarProps {
     isOpen?: boolean;
     onClose?: () => void;
@@ -33,6 +35,19 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
     };
 
     const [role, setRole] = React.useState<string>('admin');
+    const [pendingCount, setPendingCount] = React.useState(0);
+
+    const fetchPendingCount = async () => {
+        try {
+            const res = await apiFetch('/admin/badge-counts');
+            if (res.ok) {
+                const data = await res.json();
+                setPendingCount(data.pending_drivers);
+            }
+        } catch (error) {
+            console.error('Error fetching pending count:', error);
+        }
+    };
 
     React.useEffect(() => {
         const storedUser = localStorage.getItem('admin_user');
@@ -44,6 +59,10 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
                 console.error("Error parsing user data", e);
             }
         }
+
+        fetchPendingCount();
+        const interval = setInterval(fetchPendingCount, 10000);
+        return () => clearInterval(interval);
     }, []);
 
     const menuItems = [
@@ -99,7 +118,20 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
                                     onClick={() => onClose?.()} // Close sidebar on nav click
                                 >
                                     <item.icon size={18} />
-                                    <span>{item.name}</span>
+                                    <span style={{ flex: 1 }}>{item.name}</span>
+                                    {item.name === 'Verification' && pendingCount > 0 && (
+                                        <span style={{
+                                            background: '#ef4444',
+                                            color: 'white',
+                                            fontSize: '10px',
+                                            padding: '2px 6px',
+                                            borderRadius: '10px',
+                                            fontWeight: '700',
+                                            marginLeft: 'auto'
+                                        }}>
+                                            {pendingCount}
+                                        </span>
+                                    )}
                                 </Link>
                             </li>
                         );
