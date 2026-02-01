@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState, useRef } from 'react';
-import { Activity, Server, Database, Zap, Cpu, MemoryStick as Memory, ClipboardList, Users, Loader2, Maximize, Minimize } from 'lucide-react';
+import { Activity, Server, Database, Zap, Cpu, MemoryStick as Memory, ClipboardList, Users, Loader2, Maximize, Minimize, DollarSign, TrendingUp } from 'lucide-react';
 import { apiFetch } from '@/lib/api';
 import {
     AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer
@@ -29,7 +29,8 @@ export default function MonitoringPage() {
                             time: new Date().toLocaleTimeString(),
                             cpu: result.workload.cpu,
                             memory: Math.round(result.workload.memory),
-                            orders: result.workload.active_orders
+                            orders: result.workload.active_orders,
+                            revenue: result.workload.total_revenue
                         }];
                         // Keep last 20 data points
                         return newHistory.slice(-20);
@@ -119,7 +120,12 @@ export default function MonitoringPage() {
                 </button>
             </div>
 
-            <div className="stat-grid">
+            <div className="stat-grid" style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+                gap: '20px',
+                marginBottom: '32px'
+            }}>
                 <div className="card stat-card" style={{
                     borderLeft: '4px solid #10b981',
                     background: isFullscreen ? '#1e293b' : 'var(--card-bg)',
@@ -163,6 +169,17 @@ export default function MonitoringPage() {
                         <span className="stat-label" style={{ color: isFullscreen ? '#94a3b8' : 'var(--text-muted)' }}>Online Drivers</span>
                     </div>
                     <h3 className="stat-value" style={{ color: isFullscreen ? '#fff' : 'var(--text-main)' }}>{data?.workload.online_drivers}</h3>
+                </div>
+                <div className="card stat-card" style={{
+                    borderLeft: '4px solid #ec4899',
+                    background: isFullscreen ? '#1e293b' : 'var(--card-bg)',
+                    borderColor: '#ec4899'
+                }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '8px' }}>
+                        <TrendingUp size={18} color="#ec4899" />
+                        <span className="stat-label" style={{ color: isFullscreen ? '#94a3b8' : 'var(--text-muted)' }}>Total Revenue</span>
+                    </div>
+                    <h3 className="stat-value" style={{ color: isFullscreen ? '#fff' : 'var(--text-main)' }}>฿{data?.workload.total_revenue.toLocaleString()}</h3>
                 </div>
             </div>
 
@@ -271,56 +288,112 @@ export default function MonitoringPage() {
                 </div>
             </div>
 
-            {/* Traffic/Order Monitoring */}
-            <div className="card">
-                <h3 style={{ fontSize: '18px', fontWeight: '700', marginBottom: '20px' }}>Workload Peaks (Active Orders)</h3>
-                <div style={{ height: '320px', width: '100%' }}>
-                    <ResponsiveContainer width="100%" height="100%">
-                        <AreaChart data={history}>
-                            <defs>
-                                <linearGradient id="colorOrders" x1="0" y1="0" x2="0" y2="1">
-                                    <stop offset="5%" stopColor="#f59e0b" stopOpacity={0.3} />
-                                    <stop offset="95%" stopColor="#f59e0b" stopOpacity={0} />
-                                </linearGradient>
-                            </defs>
-                            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={isFullscreen ? '#334155' : '#f1f5f9'} />
-                            <XAxis
-                                dataKey="time"
-                                fontSize={10}
-                                tickMargin={10}
-                                axisLine={false}
-                                tickLine={false}
-                                tick={{ fill: isFullscreen ? '#94a3b8' : '#64748b' }}
-                            />
-                            <YAxis
-                                fontSize={10}
-                                axisLine={false}
-                                tickLine={false}
-                                tick={{ fill: isFullscreen ? '#94a3b8' : '#64748b' }}
-                            />
-                            <Tooltip
-                                contentStyle={{
-                                    borderRadius: '12px',
-                                    border: 'none',
-                                    boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)',
-                                    fontSize: '12px',
-                                    fontWeight: '600',
-                                    backgroundColor: isFullscreen ? '#1e293b' : '#fff',
-                                    color: isFullscreen ? '#fff' : '#000'
-                                }}
-                            />
-                            <Area
-                                type="monotone"
-                                dataKey="orders"
-                                stroke="#f59e0b"
-                                strokeWidth={3}
-                                fillOpacity={1}
-                                fill="url(#colorOrders)"
-                                name="Active Orders"
-                                animationDuration={1000}
-                            />
-                        </AreaChart>
-                    </ResponsiveContainer>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '24px', marginBottom: '32px' }}>
+                {/* Traffic/Order Monitoring */}
+                <div className="card">
+                    <h3 style={{ fontSize: '18px', fontWeight: '700', marginBottom: '20px' }}>Workload Peaks (Active Orders)</h3>
+                    <div style={{ height: '320px', width: '100%' }}>
+                        <ResponsiveContainer width="100%" height="100%">
+                            <AreaChart data={history}>
+                                <defs>
+                                    <linearGradient id="colorOrders" x1="0" y1="0" x2="0" y2="1">
+                                        <stop offset="5%" stopColor="#f59e0b" stopOpacity={0.3} />
+                                        <stop offset="95%" stopColor="#f59e0b" stopOpacity={0} />
+                                    </linearGradient>
+                                </defs>
+                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={isFullscreen ? '#334155' : '#f1f5f9'} />
+                                <XAxis
+                                    dataKey="time"
+                                    fontSize={10}
+                                    tickMargin={10}
+                                    axisLine={false}
+                                    tickLine={false}
+                                    tick={{ fill: isFullscreen ? '#94a3b8' : '#64748b' }}
+                                />
+                                <YAxis
+                                    fontSize={10}
+                                    axisLine={false}
+                                    tickLine={false}
+                                    tick={{ fill: isFullscreen ? '#94a3b8' : '#64748b' }}
+                                />
+                                <Tooltip
+                                    contentStyle={{
+                                        borderRadius: '12px',
+                                        border: 'none',
+                                        boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)',
+                                        fontSize: '12px',
+                                        fontWeight: '600',
+                                        backgroundColor: isFullscreen ? '#1e293b' : '#fff',
+                                        color: isFullscreen ? '#fff' : '#000'
+                                    }}
+                                />
+                                <Area
+                                    type="monotone"
+                                    dataKey="orders"
+                                    stroke="#f59e0b"
+                                    strokeWidth={3}
+                                    fillOpacity={1}
+                                    fill="url(#colorOrders)"
+                                    name="Active Orders"
+                                    animationDuration={1000}
+                                />
+                            </AreaChart>
+                        </ResponsiveContainer>
+                    </div>
+                </div>
+
+                {/* Platform Revenue Trend */}
+                <div className="card">
+                    <h3 style={{ fontSize: '18px', fontWeight: '700', marginBottom: '20px' }}>Revenue Trend (Total Platform Fee)</h3>
+                    <div style={{ height: '320px', width: '100%' }}>
+                        <ResponsiveContainer width="100%" height="100%">
+                            <AreaChart data={history}>
+                                <defs>
+                                    <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
+                                        <stop offset="5%" stopColor="#ec4899" stopOpacity={0.3} />
+                                        <stop offset="95%" stopColor="#ec4899" stopOpacity={0} />
+                                    </linearGradient>
+                                </defs>
+                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke={isFullscreen ? '#334155' : '#f1f5f9'} />
+                                <XAxis
+                                    dataKey="time"
+                                    fontSize={10}
+                                    tickMargin={10}
+                                    axisLine={false}
+                                    tickLine={false}
+                                    tick={{ fill: isFullscreen ? '#94a3b8' : '#64748b' }}
+                                />
+                                <YAxis
+                                    fontSize={10}
+                                    axisLine={false}
+                                    tickLine={false}
+                                    tick={{ fill: isFullscreen ? '#94a3b8' : '#64748b' }}
+                                />
+                                <Tooltip
+                                    contentStyle={{
+                                        borderRadius: '12px',
+                                        border: 'none',
+                                        boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)',
+                                        fontSize: '12px',
+                                        fontWeight: '600',
+                                        backgroundColor: isFullscreen ? '#1e293b' : '#fff',
+                                        color: isFullscreen ? '#fff' : '#000'
+                                    }}
+                                    formatter={(value: any) => [`฿${value.toLocaleString()}`, "Revenue"]}
+                                />
+                                <Area
+                                    type="monotone"
+                                    dataKey="revenue"
+                                    stroke="#ec4899"
+                                    strokeWidth={3}
+                                    fillOpacity={1}
+                                    fill="url(#colorRevenue)"
+                                    name="Platform Revenue"
+                                    animationDuration={1000}
+                                />
+                            </AreaChart>
+                        </ResponsiveContainer>
+                    </div>
                 </div>
             </div>
         </div>

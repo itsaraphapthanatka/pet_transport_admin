@@ -14,7 +14,8 @@ import {
     ShieldCheck,
     LogOut,
     PawPrint,
-    X
+    X,
+    BarChart3
 } from 'lucide-react';
 
 import { apiFetch } from '@/lib/api';
@@ -77,6 +78,7 @@ const Sidebar = ({ isOpen, onClose }: SidebarProps) => {
         { name: 'Vehicle Types', icon: Car, href: '/settings/vehicle-types', roles: ['super_admin', 'admin'] },
         { name: 'Pet Types', icon: PawPrint, href: '/settings/pet-types', roles: ['super_admin', 'admin'] },
         { name: 'Monitoring', icon: LayoutDashboard, href: '/monitoring', roles: ['super_admin'] },
+        { name: 'Insights', icon: BarChart3, href: '/insights', roles: ['super_admin', 'admin'] },
         { name: 'Settings', icon: Settings, href: '/settings', roles: ['super_admin', 'admin'] },
     ];
 
