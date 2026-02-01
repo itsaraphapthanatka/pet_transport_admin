@@ -1,0 +1,39 @@
+<svg width="100" height="200" viewBox="0 0 100 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Main Body Shadow -->
+  <rect x="12" y="15" width="76" height="175" rx="38" fill="black" fill-opacity="0.2" filter="blur(4px)"/>
+  
+  <!-- Main Body -->
+  <rect x="10" y="10" width="80" height="180" rx="40" fill="url(#body_grad)"/>
+  
+  <!-- Windshield -->
+  <path d="M25 60C25 45 40 40 50 40C60 40 75 45 75 60L72 85H28L25 60Z" fill="url(#glass_grad)"/>
+  
+  <!-- Rear Window -->
+  <path d="M28 140H72L75 160C75 175 60 180 50 180C40 180 25 175 25 160L28 140Z" fill="url(#glass_grad)"/>
+  
+  <!-- Roof -->
+  <rect x="28" y="80" width="44" height="65" rx="5" fill="#334155"/>
+  
+  <!-- Hood Lines -->
+  <path d="M35 30Q50 25 65 30" stroke="white" stroke-opacity="0.1" stroke-width="2"/>
+  
+  <!-- Headlights -->
+  <rect x="18" y="30" width="12" height="6" rx="3" fill="#F1F5F9" fill-opacity="0.8"/>
+  <rect x="70" y="30" width="12" height="6" rx="3" fill="#F1F5F9" fill-opacity="0.8"/>
+  
+  <!-- Tail lights -->
+  <rect x="18" y="175" width="12" height="4" rx="2" fill="#EF4444"/>
+  <rect x="70" y="175" width="12" height="4" rx="2" fill="#EF4444"/>
+  
+  <defs>
+    <linearGradient id="body_grad" x1="50" y1="10" x2="50" y2="190" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#475569"/>
+      <stop offset="0.5" stop-color="#1E293B"/>
+      <stop offset="1" stop-color="#0F172A"/>
+    </linearGradient>
+    <linearGradient id="glass_grad" x1="50" y1="40" x2="50" y2="180" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#94A3B8" stop-opacity="0.6"/>
+      <stop offset="1" stop-color="#475569" stop-opacity="0.8"/>
+    </linearGradient>
+  </defs>
+</svg>

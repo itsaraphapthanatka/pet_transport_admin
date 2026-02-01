@@ -26,11 +26,12 @@ const Header = ({ onMenuClick }: HeaderProps) => {
             if (res.ok) {
                 const data = await res.json();
 
-                // Play sound if counts increased
+                /* Play sound if counts increased (Disabled: missing notification-sound.mp3)
                 if (data.total > counts.total) {
                     const audio = new Audio('/notification-sound.mp3');
                     audio.play().catch(e => console.log('Audio play blocked'));
                 }
+                */
 
                 setCounts(data);
             }

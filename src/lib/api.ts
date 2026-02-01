@@ -19,19 +19,35 @@ export async function apiFetch(endpoint: string, options: RequestInit = {}) {
         delete headers['Content-Type'];
     }
 
-    const response = await fetch(`${API_URL}${endpoint}`, {
-        ...options,
-        headers,
+    const fullUrl = `${API_URL}${endpoint}`;
+    console.log(`[apiFetch] Requesting: ${fullUrl}`, {
+        method: options.method || 'GET',
+        hasToken: !!token,
+        headers
     });
 
-    if (response.status === 401) {
-        if (typeof window !== 'undefined' && !isRedirectingToLogin) {
-            isRedirectingToLogin = true;
-            localStorage.removeItem('admin_token');
-            localStorage.removeItem('admin_user');
-            window.location.href = '/login';
-        }
-    }
+    try {
+        const response = await window.fetch(fullUrl, {
+            ...options,
+            headers,
+        });
 
-    return response;
+        if (response.status === 401) {
+            if (typeof window !== 'undefined' && !isRedirectingToLogin) {
+                isRedirectingToLogin = true;
+                localStorage.removeItem('admin_token');
+                localStorage.removeItem('admin_user');
+                window.location.href = '/login';
+            }
+        }
+
+        return response;
+    } catch (err: any) {
+        console.error(`[apiFetch] CRITICAL FETCH ERROR for ${fullUrl}:`, {
+            message: err.message,
+            stack: err.stack,
+            cause: err.cause
+        });
+        throw err;
+    }
 }
