@@ -32,7 +32,6 @@
 html,
 body {
   max-width: 100vw;
-  overflow-x: hidden;
   font-family: 'Inter', sans-serif;
   background: var(--bg-main);
   color: var(--text-main);
@@ -148,6 +147,24 @@ a {
 .card:hover {
   transform: translateY(-2px);
   box-shadow: var(--shadow-md);
+}
+
+.table-container {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  width: 100%;
+  display: block;
+}
+
+.table-container table {
+  min-width: 800px;
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: auto;
+}
+
+.table-container th {
+  white-space: nowrap;
 }
 
 .btn-primary {

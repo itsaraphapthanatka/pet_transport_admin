@@ -259,128 +259,130 @@ export default function AdminsPage() {
             </div>
 
             {/* Admins Table */}
-            <div className="card" style={{ padding: '0', overflowX: 'auto' }}>
-                <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
-                    <thead>
-                        <tr style={{ borderBottom: '1px solid var(--card-border)', background: '#f8fafc' }}>
-                            <th style={{ padding: '16px 24px', color: 'var(--text-muted)', fontSize: '12px', textTransform: 'uppercase', fontWeight: '600' }}>Admin Info</th>
-                            <th style={{ padding: '16px 24px', color: 'var(--text-muted)', fontSize: '12px', textTransform: 'uppercase', fontWeight: '600' }}>Role</th>
-                            <th style={{ padding: '16px 24px', color: 'var(--text-muted)', fontSize: '12px', textTransform: 'uppercase', fontWeight: '600' }}>Last Login</th>
-                            <th style={{ padding: '16px 24px', color: 'var(--text-muted)', fontSize: '12px', textTransform: 'uppercase', fontWeight: '600' }}>Status</th>
-                            <th style={{ padding: '16px 24px', color: 'var(--text-muted)', textAlign: 'right' }}>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {filteredAdmins.map((admin) => (
-                            <tr key={admin.id} style={{ borderBottom: '1px solid var(--card-border)' }}>
-                                <td style={{ padding: '16px 24px' }}>
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                                        <div style={{
-                                            width: '40px',
-                                            height: '40px',
-                                            borderRadius: '50%',
-                                            background: '#f1f5f9',
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            justifyContent: 'center',
-                                            color: 'var(--text-muted)'
-                                        }}>
-                                            <Users size={20} />
-                                        </div>
-                                        <div>
-                                            <p style={{ fontSize: '14px', fontWeight: '700', color: 'var(--text-main)' }}>{admin.full_name || "Unknown"}</p>
-                                            <div style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '12px', color: 'var(--text-muted)' }}>
-                                                <Mail size={12} />
-                                                {admin.email}
+            <div className="card" style={{ padding: '0' }}>
+                <div className="table-container">
+                    <table>
+                        <thead>
+                            <tr style={{ borderBottom: '1px solid var(--card-border)', background: '#f8fafc' }}>
+                                <th style={{ padding: '16px 24px', color: 'var(--text-muted)', fontSize: '12px', textTransform: 'uppercase', fontWeight: '600' }}>Admin Info</th>
+                                <th style={{ padding: '16px 24px', color: 'var(--text-muted)', fontSize: '12px', textTransform: 'uppercase', fontWeight: '600' }}>Role</th>
+                                <th style={{ padding: '16px 24px', color: 'var(--text-muted)', fontSize: '12px', textTransform: 'uppercase', fontWeight: '600' }}>Last Login</th>
+                                <th style={{ padding: '16px 24px', color: 'var(--text-muted)', fontSize: '12px', textTransform: 'uppercase', fontWeight: '600' }}>Status</th>
+                                <th style={{ padding: '16px 24px', color: 'var(--text-muted)', textAlign: 'right' }}>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {filteredAdmins.map((admin) => (
+                                <tr key={admin.id} style={{ borderBottom: '1px solid var(--card-border)' }}>
+                                    <td style={{ padding: '16px 24px' }}>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                                            <div style={{
+                                                width: '40px',
+                                                height: '40px',
+                                                borderRadius: '50%',
+                                                background: '#f1f5f9',
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                justifyContent: 'center',
+                                                color: 'var(--text-muted)'
+                                            }}>
+                                                <Users size={20} />
+                                            </div>
+                                            <div>
+                                                <p style={{ fontSize: '14px', fontWeight: '700', color: 'var(--text-main)' }}>{admin.full_name || "Unknown"}</p>
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '12px', color: 'var(--text-muted)' }}>
+                                                    <Mail size={12} />
+                                                    {admin.email}
+                                                </div>
                                             </div>
                                         </div>
-                                    </div>
-                                </td>
-                                <td style={{ padding: '16px 24px' }}>
-                                    <span style={{
-                                        display: 'inline-flex',
-                                        alignItems: 'center',
-                                        gap: '4px',
-                                        fontSize: '11px',
-                                        fontWeight: '700',
-                                        padding: '4px 10px',
-                                        borderRadius: '20px',
-                                        background: admin.role === 'super_admin' ? '#f3e8ff' : '#eff6ff',
-                                        color: admin.role === 'super_admin' ? '#7e22ce' : '#2563eb'
-                                    }}>
-                                        <Shield size={12} />
-                                        {admin.role === 'super_admin' ? 'Super Admin' : admin.role === 'admin' ? 'Administrator' : 'Moderator'}
-                                    </span>
-                                </td>
-                                <td style={{ padding: '16px 24px' }}>
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', color: 'var(--text-muted)' }}>
-                                        <Clock size={14} />
-                                        {admin.last_login ? new Date(admin.last_login).toLocaleString('en-GB') : "Never"}
-                                    </div>
-                                </td>
-                                <td style={{ padding: '16px 24px' }}>
-                                    <span style={{
-                                        display: 'inline-flex',
-                                        alignItems: 'center',
-                                        gap: '4px',
-                                        fontSize: '11px',
-                                        fontWeight: '700',
-                                        padding: '4px 10px',
-                                        borderRadius: '20px',
-                                        background: '#ecfdf5',
-                                        color: '#059669'
-                                    }}>
-                                        <CheckCircle2 size={12} />
-                                        Active
-                                    </span>
-                                </td>
-                                <td style={{ padding: '16px 24px', textAlign: 'right' }}>
-                                    <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
-                                        <button
-                                            onClick={() => handleEdit(admin)}
-                                            style={{
-                                                padding: '8px',
-                                                borderRadius: '8px',
-                                                border: 'none',
-                                                background: '#f1f5f9',
-                                                cursor: 'pointer',
-                                                color: '#475569',
-                                                transition: 'all 0.2s'
-                                            }}
-                                            title="Edit"
-                                        >
-                                            <Edit2 size={16} />
-                                        </button>
-                                        <button
-                                            onClick={() => handleDelete(admin.id)}
-                                            style={{
-                                                padding: '8px',
-                                                borderRadius: '8px',
-                                                border: 'none',
-                                                background: '#fef2f2',
-                                                cursor: 'pointer',
-                                                color: '#dc2626',
-                                                opacity: admin.role === 'super_admin' ? 0.5 : 1,
-                                                pointerEvents: admin.role === 'super_admin' ? 'none' : 'auto'
-                                            }}
-                                            title="Delete"
-                                            disabled={admin.role === 'super_admin'}
-                                        >
-                                            <Trash2 size={16} />
-                                        </button>
-                                    </div>
-                                </td>
-                            </tr>
-                        ))}
-                        {filteredAdmins.length === 0 && (
-                            <tr>
-                                <td colSpan={5} style={{ padding: '48px', textAlign: 'center', color: 'var(--text-muted)' }}>
-                                    No admins found matching your search.
-                                </td>
-                            </tr>
-                        )}
-                    </tbody>
-                </table>
+                                    </td>
+                                    <td style={{ padding: '16px 24px' }}>
+                                        <span style={{
+                                            display: 'inline-flex',
+                                            alignItems: 'center',
+                                            gap: '4px',
+                                            fontSize: '11px',
+                                            fontWeight: '700',
+                                            padding: '4px 10px',
+                                            borderRadius: '20px',
+                                            background: admin.role === 'super_admin' ? '#f3e8ff' : '#eff6ff',
+                                            color: admin.role === 'super_admin' ? '#7e22ce' : '#2563eb'
+                                        }}>
+                                            <Shield size={12} />
+                                            {admin.role === 'super_admin' ? 'Super Admin' : admin.role === 'admin' ? 'Administrator' : 'Moderator'}
+                                        </span>
+                                    </td>
+                                    <td style={{ padding: '16px 24px' }}>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', color: 'var(--text-muted)' }}>
+                                            <Clock size={14} />
+                                            {admin.last_login ? new Date(admin.last_login).toLocaleString('en-GB') : "Never"}
+                                        </div>
+                                    </td>
+                                    <td style={{ padding: '16px 24px' }}>
+                                        <span style={{
+                                            display: 'inline-flex',
+                                            alignItems: 'center',
+                                            gap: '4px',
+                                            fontSize: '11px',
+                                            fontWeight: '700',
+                                            padding: '4px 10px',
+                                            borderRadius: '20px',
+                                            background: '#ecfdf5',
+                                            color: '#059669'
+                                        }}>
+                                            <CheckCircle2 size={12} />
+                                            Active
+                                        </span>
+                                    </td>
+                                    <td style={{ padding: '16px 24px', textAlign: 'right' }}>
+                                        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
+                                            <button
+                                                onClick={() => handleEdit(admin)}
+                                                style={{
+                                                    padding: '8px',
+                                                    borderRadius: '8px',
+                                                    border: 'none',
+                                                    background: '#f1f5f9',
+                                                    cursor: 'pointer',
+                                                    color: '#475569',
+                                                    transition: 'all 0.2s'
+                                                }}
+                                                title="Edit"
+                                            >
+                                                <Edit2 size={16} />
+                                            </button>
+                                            <button
+                                                onClick={() => handleDelete(admin.id)}
+                                                style={{
+                                                    padding: '8px',
+                                                    borderRadius: '8px',
+                                                    border: 'none',
+                                                    background: '#fef2f2',
+                                                    cursor: 'pointer',
+                                                    color: '#dc2626',
+                                                    opacity: admin.role === 'super_admin' ? 0.5 : 1,
+                                                    pointerEvents: admin.role === 'super_admin' ? 'none' : 'auto'
+                                                }}
+                                                title="Delete"
+                                                disabled={admin.role === 'super_admin'}
+                                            >
+                                                <Trash2 size={16} />
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            ))}
+                            {filteredAdmins.length === 0 && (
+                                <tr>
+                                    <td colSpan={5} style={{ padding: '48px', textAlign: 'center', color: 'var(--text-muted)' }}>
+                                        No admins found matching your search.
+                                    </td>
+                                </tr>
+                            )}
+                        </tbody>
+                    </table>
+                </div>
             </div>
 
             {/* Create/Edit Modal */}

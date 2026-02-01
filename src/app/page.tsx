@@ -112,8 +112,8 @@ export default function Dashboard() {
             <h3 style={{ fontSize: '18px', fontWeight: '700' }}>Recent Orders</h3>
             <button style={{ color: 'var(--primary)', fontWeight: '600', fontSize: '14px', background: 'transparent', border: 'none', cursor: 'pointer' }}>View all</button>
           </div>
-          <div style={{ overflowX: 'auto' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+          <div className="table-container">
+            <table>
               <thead>
                 <tr style={{ borderBottom: '1px solid var(--card-border)' }}>
                   <th style={{ padding: '16px 24px', color: 'var(--text-muted)', fontSize: '12px', textTransform: 'uppercase', fontWeight: '600' }}>Order ID</th>

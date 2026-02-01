@@ -68,7 +68,7 @@ const Header = ({ onMenuClick }: HeaderProps) => {
     };
 
     return (
-        <header className="header" style={{ position: 'relative' }}>
+        <header className="header" style={{ position: 'relative' }} suppressHydrationWarning>
             <button className="menu-btn" onClick={onMenuClick}>
                 <Menu size={24} />
             </button>

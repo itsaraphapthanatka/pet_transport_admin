@@ -141,86 +141,88 @@ export default function OrdersPage() {
                 </div>
             </div>
 
-            <div className="card" style={{ padding: '0', overflowX: 'auto' }}>
-                <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
-                    <thead>
-                        <tr style={{ borderBottom: '1px solid var(--card-border)', background: '#f8fafc' }}>
-                            <th style={{ padding: '16px 24px', color: 'var(--text-muted)', fontSize: '12px', textTransform: 'uppercase', fontWeight: '600' }}>Order Info</th>
-                            <th style={{ padding: '16px 24px', color: 'var(--text-muted)', fontSize: '12px', textTransform: 'uppercase', fontWeight: '600' }}>Participants</th>
-                            <th style={{ padding: '16px 24px', color: 'var(--text-muted)', fontSize: '12px', textTransform: 'uppercase', fontWeight: '600' }}>Route</th>
-                            <th style={{ padding: '16px 24px', color: 'var(--text-muted)', fontSize: '12px', textTransform: 'uppercase', fontWeight: '600' }}>Status</th>
-                            <th style={{ padding: '16px 24px', color: 'var(--text-muted)', fontSize: '12px', textTransform: 'uppercase', fontWeight: '600' }}>Amount</th>
-                            <th style={{ padding: '16px 24px', color: 'var(--text-muted)', textAlign: 'right' }}></th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {filteredOrders.map((order) => {
-                            const status = getStatusStyle(order.status);
-                            return (
-                                <tr key={order.id} style={{ borderBottom: '1px solid var(--card-border)' }}>
-                                    <td style={{ padding: '16px 24px' }}>
-                                        <p style={{ fontSize: '14px', fontWeight: '700', color: 'var(--text-main)' }}>#{order.id}</p>
-                                        <p style={{ fontSize: '12px', color: 'var(--text-muted)' }}>{new Date(order.created_at).toLocaleString('en-GB')}</p>
-                                    </td>
-                                    <td style={{ padding: '16px 24px' }}>
-                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                                            <p style={{ fontSize: '13px', color: 'var(--text-main)', fontWeight: '500' }}>
-                                                Customer: <span style={{ fontWeight: '600' }}>{order.customer?.full_name || 'N/A'}</span>
-                                            </p>
-                                            <p style={{ fontSize: '13px', color: order.driver ? 'var(--text-main)' : 'var(--text-muted)', fontWeight: '500' }}>
-                                                Driver: <span style={{ fontWeight: '600' }}>{order.driver?.full_name || 'Unassigned'}</span>
-                                            </p>
-                                        </div>
-                                    </td>
-                                    <td style={{ padding: '16px 24px', maxWidth: '300px' }}>
-                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', color: 'var(--text-main)' }}>
-                                                <MapPin size={12} color="#10b981" />
-                                                <span style={{ textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>{order.pickup_address}</span>
+            <div className="card" style={{ padding: '0' }}>
+                <div className="table-container">
+                    <table>
+                        <thead>
+                            <tr style={{ borderBottom: '1px solid var(--card-border)', background: '#f8fafc' }}>
+                                <th style={{ padding: '16px 24px', color: 'var(--text-muted)', fontSize: '12px', textTransform: 'uppercase', fontWeight: '600' }}>Order Info</th>
+                                <th style={{ padding: '16px 24px', color: 'var(--text-muted)', fontSize: '12px', textTransform: 'uppercase', fontWeight: '600' }}>Participants</th>
+                                <th style={{ padding: '16px 24px', color: 'var(--text-muted)', fontSize: '12px', textTransform: 'uppercase', fontWeight: '600' }}>Route</th>
+                                <th style={{ padding: '16px 24px', color: 'var(--text-muted)', fontSize: '12px', textTransform: 'uppercase', fontWeight: '600' }}>Status</th>
+                                <th style={{ padding: '16px 24px', color: 'var(--text-muted)', fontSize: '12px', textTransform: 'uppercase', fontWeight: '600' }}>Amount</th>
+                                <th style={{ padding: '16px 24px', color: 'var(--text-muted)', textAlign: 'right' }}></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {filteredOrders.map((order) => {
+                                const status = getStatusStyle(order.status);
+                                return (
+                                    <tr key={order.id} style={{ borderBottom: '1px solid var(--card-border)' }}>
+                                        <td style={{ padding: '16px 24px' }}>
+                                            <p style={{ fontSize: '14px', fontWeight: '700', color: 'var(--text-main)' }}>#{order.id}</p>
+                                            <p style={{ fontSize: '12px', color: 'var(--text-muted)' }}>{new Date(order.created_at).toLocaleString('en-GB')}</p>
+                                        </td>
+                                        <td style={{ padding: '16px 24px' }}>
+                                            <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                                                <p style={{ fontSize: '13px', color: 'var(--text-main)', fontWeight: '500' }}>
+                                                    Customer: <span style={{ fontWeight: '600' }}>{order.customer?.full_name || 'N/A'}</span>
+                                                </p>
+                                                <p style={{ fontSize: '13px', color: order.driver ? 'var(--text-main)' : 'var(--text-muted)', fontWeight: '500' }}>
+                                                    Driver: <span style={{ fontWeight: '600' }}>{order.driver?.full_name || 'Unassigned'}</span>
+                                                </p>
                                             </div>
-                                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', color: 'var(--text-main)' }}>
-                                                <MapPin size={12} color="#ef4444" />
-                                                <span style={{ textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>{order.dropoff_address}</span>
+                                        </td>
+                                        <td style={{ padding: '16px 24px', maxWidth: '300px' }}>
+                                            <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', color: 'var(--text-main)' }}>
+                                                    <MapPin size={12} color="#10b981" />
+                                                    <span style={{ textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>{order.pickup_address}</span>
+                                                </div>
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', color: 'var(--text-main)' }}>
+                                                    <MapPin size={12} color="#ef4444" />
+                                                    <span style={{ textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>{order.dropoff_address}</span>
+                                                </div>
                                             </div>
-                                        </div>
-                                    </td>
-                                    <td style={{ padding: '16px 24px' }}>
-                                        <span style={{
-                                            display: 'inline-flex',
-                                            alignItems: 'center',
-                                            gap: '4px',
-                                            fontSize: '11px',
-                                            fontWeight: '700',
-                                            padding: '4px 10px',
-                                            borderRadius: '20px',
-                                            background: status.bg,
-                                            color: status.text
-                                        }}>
-                                            <status.icon size={12} />
-                                            {order.status.toUpperCase()}
-                                        </span>
-                                    </td>
-                                    <td style={{ padding: '16px 24px' }}>
-                                        <p style={{ fontSize: '14px', fontWeight: '800', color: 'var(--text-main)' }}>฿{Number(order.price).toLocaleString()}</p>
-                                        <p style={{ fontSize: '11px', color: 'var(--text-muted)' }}>{order.payment_method?.toUpperCase()} • {order.payment_status?.toUpperCase()}</p>
-                                    </td>
-                                    <td style={{ padding: '16px 24px', textAlign: 'right' }}>
-                                        <button style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--text-muted)' }}>
-                                            <MoreVertical size={18} />
-                                        </button>
+                                        </td>
+                                        <td style={{ padding: '16px 24px' }}>
+                                            <span style={{
+                                                display: 'inline-flex',
+                                                alignItems: 'center',
+                                                gap: '4px',
+                                                fontSize: '11px',
+                                                fontWeight: '700',
+                                                padding: '4px 10px',
+                                                borderRadius: '20px',
+                                                background: status.bg,
+                                                color: status.text
+                                            }}>
+                                                <status.icon size={12} />
+                                                {order.status.toUpperCase()}
+                                            </span>
+                                        </td>
+                                        <td style={{ padding: '16px 24px' }}>
+                                            <p style={{ fontSize: '14px', fontWeight: '800', color: 'var(--text-main)' }}>฿{Number(order.price).toLocaleString()}</p>
+                                            <p style={{ fontSize: '11px', color: 'var(--text-muted)' }}>{order.payment_method?.toUpperCase()} • {order.payment_status?.toUpperCase()}</p>
+                                        </td>
+                                        <td style={{ padding: '16px 24px', textAlign: 'right' }}>
+                                            <button style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--text-muted)' }}>
+                                                <MoreVertical size={18} />
+                                            </button>
+                                        </td>
+                                    </tr>
+                                );
+                            })}
+                            {filteredOrders.length === 0 && (
+                                <tr>
+                                    <td colSpan={6} style={{ padding: '48px', textAlign: 'center', color: 'var(--text-muted)' }}>
+                                        No orders found.
                                     </td>
                                 </tr>
-                            );
-                        })}
-                        {filteredOrders.length === 0 && (
-                            <tr>
-                                <td colSpan={6} style={{ padding: '48px', textAlign: 'center', color: 'var(--text-muted)' }}>
-                                    No orders found.
-                                </td>
-                            </tr>
-                        )}
-                    </tbody>
-                </table>
+                            )}
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
     );

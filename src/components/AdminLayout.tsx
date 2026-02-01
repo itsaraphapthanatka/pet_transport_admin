@@ -38,7 +38,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
     if (loading) {
         return (
-            <div style={{ height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <div style={{ height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }} suppressHydrationWarning>
                 <Loader2 className="animate-spin" size={48} color="var(--primary)" />
             </div>
         );

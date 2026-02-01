@@ -206,124 +206,126 @@ export default function DriversPage() {
                 </div>
             </div>
 
-            <div className="card" style={{ padding: '0', overflow: 'hidden' }}>
-                <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
-                    <thead style={{ background: '#f8fafc' }}>
-                        <tr>
-                            <th style={{ padding: '16px 24px', color: 'var(--text-muted)', fontSize: '12px', textTransform: 'uppercase', fontWeight: '600' }}>Driver</th>
-                            <th style={{ padding: '16px 24px', color: 'var(--text-muted)', fontSize: '12px', textTransform: 'uppercase', fontWeight: '600' }}>Vehicle</th>
-                            <th style={{ padding: '16px 24px', color: 'var(--text-muted)', fontSize: '12px', textTransform: 'uppercase', fontWeight: '600' }}>Status</th>
-                            <th style={{ padding: '16px 24px', color: 'var(--text-muted)', fontSize: '12px', textTransform: 'uppercase', fontWeight: '600' }}>Verification</th>
-                            <th style={{ padding: '16px 24px', color: 'var(--text-muted)', fontSize: '12px', textTransform: 'uppercase', fontWeight: '600' }}>Wallet</th>
-                            <th style={{ padding: '16px 24px', color: 'var(--text-muted)', textAlign: 'right' }}></th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {filteredDrivers.map((driver) => (
-                            <tr key={driver.id} style={{ borderBottom: '1px solid var(--card-border)' }}>
-                                <td style={{ padding: '16px 24px' }}>
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                                        <div style={{
-                                            width: '44px',
-                                            height: '44px',
-                                            borderRadius: '12px',
-                                            background: '#f1f5f9',
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            justifyContent: 'center',
-                                            color: 'var(--primary)',
-                                            fontWeight: '700',
-                                            overflow: 'hidden'
-                                        }}>
-                                            {driver.profile_image_url || driver.selfie_with_id_url ? (
-                                                <img
-                                                    src={`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}${driver.profile_image_url || driver.selfie_with_id_url}`}
-                                                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                                                />
-                                            ) : (
-                                                driver.full_name?.[0] || 'D'
-                                            )}
-                                        </div>
-                                        <div>
-                                            <p style={{ fontSize: '14px', fontWeight: '700', color: 'var(--text-main)' }}>{driver.full_name}</p>
-                                            <p style={{ fontSize: '11px', color: 'var(--text-muted)', marginBottom: '2px' }}>{driver.email}</p>
-                                            <p style={{ fontSize: '11px', color: 'var(--text-muted)' }}>{driver.phone}</p>
-                                        </div>
-                                    </div>
-                                </td>
-                                <td style={{ padding: '16px 24px' }}>
-                                    <p style={{ fontSize: '14px', color: 'var(--text-main)' }}>{driver.vehicle_type}</p>
-                                    <p style={{ fontSize: '12px', color: 'var(--text-muted)' }}>{driver.vehicle_plate}</p>
-                                </td>
-                                <td style={{ padding: '16px 24px' }}>
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                                        <div style={{
-                                            width: '8px',
-                                            height: '8px',
-                                            borderRadius: '50%',
-                                            background: driver.is_online ? '#10b981' : '#94a3b8'
-                                        }}></div>
-                                        <span style={{ fontSize: '13px', color: 'var(--text-main)' }}>
-                                            {driver.is_online ? 'Online' : 'Offline'}
-                                        </span>
-                                    </div>
-                                </td>
-                                <td style={{ padding: '16px 24px' }}>
-                                    <span style={{
-                                        display: 'inline-flex',
-                                        alignItems: 'center',
-                                        gap: '4px',
-                                        fontSize: '11px',
-                                        fontWeight: '700',
-                                        padding: '4px 8px',
-                                        borderRadius: '6px',
-                                        background: driver.is_verified ? '#ecfdf5' : '#fff7ed',
-                                        color: driver.is_verified ? '#059669' : '#c2410c'
-                                    }}>
-                                        {driver.is_verified ? <ShieldCheck size={12} /> : <ShieldAlert size={12} />}
-                                        {driver.is_verified ? 'VERIFIED' : 'PENDING'}
-                                    </span>
-                                </td>
-                                <td style={{ padding: '16px 24px' }}>
-                                    <p style={{ fontSize: '14px', fontWeight: '700', color: 'var(--text-main)' }}>
-                                        ฿{Number(driver.wallet_balance || 0).toLocaleString()}
-                                    </p>
-                                </td>
-                                <td style={{ padding: '16px 24px', textAlign: 'right' }}>
-                                    <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
-                                        <button onClick={() => handleEdit(driver)} style={{
-                                            padding: '6px',
-                                            borderRadius: '8px',
-                                            background: 'transparent',
-                                            border: '1px solid #e2e8f0',
-                                            cursor: 'pointer',
-                                            color: 'var(--text-muted)'
-                                        }}>
-                                            <Edit2 size={16} />
-                                        </button>
-                                        <button style={{
-                                            padding: '6px',
-                                            borderRadius: '8px',
-                                            background: 'transparent',
-                                            border: 'none',
-                                            cursor: 'pointer',
-                                            color: 'var(--text-muted)'
-                                        }}>
-                                            <MoreVertical size={16} />
-                                        </button>
-                                    </div>
-                                </td>
-                            </tr>
-                        ))}
-                        {filteredDrivers.length === 0 && (
+            <div className="card" style={{ padding: '0' }}>
+                <div className="table-container">
+                    <table>
+                        <thead style={{ background: '#f8fafc' }}>
                             <tr>
-                                <td colSpan={6} style={{ padding: '48px', textAlign: 'center', color: 'var(--text-muted)' }}>
-                                    No drivers found.
-                                </td>
+                                <th style={{ padding: '16px 24px', color: 'var(--text-muted)', fontSize: '12px', textTransform: 'uppercase', fontWeight: '600' }}>Driver</th>
+                                <th style={{ padding: '16px 24px', color: 'var(--text-muted)', fontSize: '12px', textTransform: 'uppercase', fontWeight: '600' }}>Vehicle</th>
+                                <th style={{ padding: '16px 24px', color: 'var(--text-muted)', fontSize: '12px', textTransform: 'uppercase', fontWeight: '600' }}>Status</th>
+                                <th style={{ padding: '16px 24px', color: 'var(--text-muted)', fontSize: '12px', textTransform: 'uppercase', fontWeight: '600' }}>Verification</th>
+                                <th style={{ padding: '16px 24px', color: 'var(--text-muted)', fontSize: '12px', textTransform: 'uppercase', fontWeight: '600' }}>Wallet</th>
+                                <th style={{ padding: '16px 24px', color: 'var(--text-muted)', textAlign: 'right' }}></th>
                             </tr>
-                        )}
-                    </tbody>
-                </table>
+                        </thead>
+                        <tbody>
+                            {filteredDrivers.map((driver) => (
+                                <tr key={driver.id} style={{ borderBottom: '1px solid var(--card-border)' }}>
+                                    <td style={{ padding: '16px 24px' }}>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                                            <div style={{
+                                                width: '44px',
+                                                height: '44px',
+                                                borderRadius: '12px',
+                                                background: '#f1f5f9',
+                                                display: 'flex',
+                                                alignItems: 'center',
+                                                justifyContent: 'center',
+                                                color: 'var(--primary)',
+                                                fontWeight: '700',
+                                                overflow: 'hidden'
+                                            }}>
+                                                {driver.profile_image_url || driver.selfie_with_id_url ? (
+                                                    <img
+                                                        src={`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}${driver.profile_image_url || driver.selfie_with_id_url}`}
+                                                        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                                                    />
+                                                ) : (
+                                                    driver.full_name?.[0] || 'D'
+                                                )}
+                                            </div>
+                                            <div>
+                                                <p style={{ fontSize: '14px', fontWeight: '700', color: 'var(--text-main)' }}>{driver.full_name}</p>
+                                                <p style={{ fontSize: '11px', color: 'var(--text-muted)', marginBottom: '2px' }}>{driver.email}</p>
+                                                <p style={{ fontSize: '11px', color: 'var(--text-muted)' }}>{driver.phone}</p>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td style={{ padding: '16px 24px' }}>
+                                        <p style={{ fontSize: '14px', color: 'var(--text-main)' }}>{driver.vehicle_type}</p>
+                                        <p style={{ fontSize: '12px', color: 'var(--text-muted)' }}>{driver.vehicle_plate}</p>
+                                    </td>
+                                    <td style={{ padding: '16px 24px' }}>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                            <div style={{
+                                                width: '8px',
+                                                height: '8px',
+                                                borderRadius: '50%',
+                                                background: driver.is_online ? '#10b981' : '#94a3b8'
+                                            }}></div>
+                                            <span style={{ fontSize: '13px', color: 'var(--text-main)' }}>
+                                                {driver.is_online ? 'Online' : 'Offline'}
+                                            </span>
+                                        </div>
+                                    </td>
+                                    <td style={{ padding: '16px 24px' }}>
+                                        <span style={{
+                                            display: 'inline-flex',
+                                            alignItems: 'center',
+                                            gap: '4px',
+                                            fontSize: '11px',
+                                            fontWeight: '700',
+                                            padding: '4px 8px',
+                                            borderRadius: '6px',
+                                            background: driver.is_verified ? '#ecfdf5' : '#fff7ed',
+                                            color: driver.is_verified ? '#059669' : '#c2410c'
+                                        }}>
+                                            {driver.is_verified ? <ShieldCheck size={12} /> : <ShieldAlert size={12} />}
+                                            {driver.is_verified ? 'VERIFIED' : 'PENDING'}
+                                        </span>
+                                    </td>
+                                    <td style={{ padding: '16px 24px' }}>
+                                        <p style={{ fontSize: '14px', fontWeight: '700', color: 'var(--text-main)' }}>
+                                            ฿{Number(driver.wallet_balance || 0).toLocaleString()}
+                                        </p>
+                                    </td>
+                                    <td style={{ padding: '16px 24px', textAlign: 'right' }}>
+                                        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
+                                            <button onClick={() => handleEdit(driver)} style={{
+                                                padding: '6px',
+                                                borderRadius: '8px',
+                                                background: 'transparent',
+                                                border: '1px solid #e2e8f0',
+                                                cursor: 'pointer',
+                                                color: 'var(--text-muted)'
+                                            }}>
+                                                <Edit2 size={16} />
+                                            </button>
+                                            <button style={{
+                                                padding: '6px',
+                                                borderRadius: '8px',
+                                                background: 'transparent',
+                                                border: 'none',
+                                                cursor: 'pointer',
+                                                color: 'var(--text-muted)'
+                                            }}>
+                                                <MoreVertical size={16} />
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            ))}
+                            {filteredDrivers.length === 0 && (
+                                <tr>
+                                    <td colSpan={6} style={{ padding: '48px', textAlign: 'center', color: 'var(--text-muted)' }}>
+                                        No drivers found.
+                                    </td>
+                                </tr>
+                            )}
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
     );
