@@ -162,6 +162,11 @@ export default function OrdersPage() {
                                         <td style={{ padding: '16px 24px' }}>
                                             <p style={{ fontSize: '14px', fontWeight: '700', color: 'var(--text-main)' }}>#{order.id}</p>
                                             <p style={{ fontSize: '12px', color: 'var(--text-muted)' }}>{new Date(order.created_at).toLocaleString('en-GB')}</p>
+                                            {order.is_round_trip && (
+                                                <div style={{ marginTop: '4px', display: 'inline-flex', alignItems: 'center', background: '#e0f2fe', color: '#0369a1', padding: '2px 6px', borderRadius: '4px', fontSize: '10px', fontWeight: 'bold' }}>
+                                                    🔁 Round-Trip {order.return_time ? `(${order.return_time})` : ''}
+                                                </div>
+                                            )}
                                         </td>
                                         <td style={{ padding: '16px 24px' }}>
                                             <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>

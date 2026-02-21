@@ -569,7 +569,7 @@ export default function SettingsPage() {
                                 <h3 style={{ fontSize: '18px', fontWeight: '700', margin: 0 }}>Financial Parameters</h3>
                             </div>
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-                                {settings.filter(s => ['commission_rate', 'minimum_withdrawal', 'base_fare'].includes(s.key)).map((setting) => (
+                                {settings.filter(s => ['commission_rate', 'minimum_withdrawal', 'base_fare', 'round_trip_waiting_fee', 'waiting_fee_per_minute', 'waiting_fee_free_minutes'].includes(s.key)).map((setting) => (
                                     <div key={setting.key} style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                                             <label className="label">
@@ -603,6 +603,56 @@ export default function SettingsPage() {
                                         )}
                                     </div>
                                 ))}
+                            </div>
+
+                            <div style={{ marginTop: '32px', borderTop: '1px solid #e2e8f0', paddingTop: '24px' }}>
+                                <div style={{ background: '#f8fafc', padding: '20px', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                        <div>
+                                            <h4 style={{ fontSize: '15px', fontWeight: '700', margin: 0 }}>Time-based Waiting Fee</h4>
+                                            <p style={{ fontSize: '13px', color: 'var(--text-muted)', margin: '4px 0 0 0' }}>
+                                                Toggle between Flat Fee (100 THB) and Time-based calculation.
+                                            </p>
+                                        </div>
+                                        <button
+                                            onClick={() => {
+                                                const current = settings.find(s => s.key === 'enable_time_based_waiting_fee')?.value;
+                                                handleUpdate('enable_time_based_waiting_fee', current === 'true' ? 'false' : 'true');
+                                            }}
+                                            disabled={saving}
+                                            style={{
+                                                width: '48px',
+                                                height: '24px',
+                                                borderRadius: '12px',
+                                                background: settings.find(s => s.key === 'enable_time_based_waiting_fee')?.value === 'true' ? 'var(--primary)' : '#cbd5e1',
+                                                border: 'none',
+                                                position: 'relative',
+                                                cursor: saving ? 'not-allowed' : 'pointer',
+                                                transition: 'all 0.2s',
+                                                opacity: saving ? 0.6 : 1
+                                            }}
+                                        >
+                                            <div style={{
+                                                width: '18px',
+                                                height: '18px',
+                                                borderRadius: '50%',
+                                                background: 'white',
+                                                position: 'absolute',
+                                                top: '3px',
+                                                left: settings.find(s => s.key === 'enable_time_based_waiting_fee')?.value === 'true' ? '27px' : '3px',
+                                                transition: 'all 0.2s'
+                                            }} />
+                                        </button>
+                                    </div>
+                                    <div style={{ marginTop: '12px', padding: '12px', borderRadius: '8px', background: settings.find(s => s.key === 'enable_time_based_waiting_fee')?.value === 'true' ? '#eff6ff' : '#f8fafc', color: settings.find(s => s.key === 'enable_time_based_waiting_fee')?.value === 'true' ? 'var(--primary)' : 'var(--text-muted)', fontSize: '12px', display: 'flex', gap: '8px', alignItems: 'flex-start', fontWeight: '600' }}>
+                                        <AlertCircle size={14} style={{ marginTop: '2px' }} />
+                                        <span>
+                                            {settings.find(s => s.key === 'enable_time_based_waiting_fee')?.value === 'true'
+                                                ? "ACTIVE: Waiting fee will be calculated as (Minutes - Grace Period) * Rate."
+                                                : "INACTIVE: A flat fee of 100 THB will be applied to all round-trip bookings."}
+                                        </span>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     )}
