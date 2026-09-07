@@ -1,0 +1,61 @@
+# Test-only CI for the admin panel: install from the lockfile, lint
+# (non-blocking for now), typecheck, and production build. Nothing here
+# deploys; deploy.sh / pm2 / nginx stay manual.
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: lint + tsc + next build
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      NEXT_TELEMETRY_DISABLED: "1"
+    steps:
+      - name: Checkout
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+
+      - name: Set up Node 24 (npm cache keyed on package-lock.json)
+        uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6.5.0
+        with:
+          node-version: "24"
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci --no-audit --no-fund
+
+      # 72 pre-existing eslint errors (56 warnings) as of 2026-09-06. The step
+      # runs and reports, but does not fail the job. Remove `continue-on-error`
+      # once `npm run lint` is clean so regressions block merges.
+      - name: Lint (non-blocking until the backlog of errors is cleared)
+        continue-on-error: true
+        run: npm run lint
+
+      - name: TypeScript
+        run: npx tsc --noEmit
+
+      - name: Restore Next.js build cache
+        uses: actions/cache@caa296126883cff596d87d8935842f9db880ef25 # v5.1.0
+        with:
+          path: .next/cache
+          key: nextjs-${{ runner.os }}-${{ hashFiles('package-lock.json') }}-${{ hashFiles('src/**/*.ts', 'src/**/*.tsx') }}
+          restore-keys: |
+            nextjs-${{ runner.os }}-${{ hashFiles('package-lock.json') }}-
+
+      # .env* files are git-ignored, so none exist here. src/lib/api.ts falls
+      # back to http://localhost:8000 when NEXT_PUBLIC_API_URL is unset; the
+      # build output is never deployed from CI.
+      - name: Build
+        run: npm run build
