@@ -9,7 +9,9 @@ import {
     AlertCircle,
     CheckCircle2,
     Tag,
-    X
+    X,
+    History,
+    ChevronRight
 } from 'lucide-react';
 import { apiFetch } from '@/lib/api';
 
@@ -35,6 +37,81 @@ interface Partner {
     is_active: boolean;
 }
 
+interface PromoUsage {
+    id: number;
+    promo_code_id: number;
+    user_id: number;
+    order_id?: number;
+    discount_amount: number;
+    created_at: string;
+    user?: {
+        full_name: string;
+        email: string;
+    }
+}
+
+/**
+ * The API stores a promo window in a naive Postgres TIMESTAMP and compares it
+ * with `datetime.utcnow()`, so `valid_from` / `valid_until` arrive as UTC
+ * without a zone ("2026-09-30T16:59:00") and must be sent as UTC.
+ * The form uses <input type="datetime-local">, i.e. the admin's local clock.
+ */
+const parseApiDate = (value?: string | null): Date | null => {
+    if (!value) return null;
+    const hasZone = /(?:Z|[+-]\d{2}:?\d{2})$/.test(value);
+    const parsed = new Date(hasZone ? value : `${value}Z`);
+    return Number.isNaN(parsed.getTime()) ? null : parsed;
+};
+
+/** API value (UTC) -> value for <input type="datetime-local"> (local time). */
+const apiDateToLocalInput = (value?: string | null): string => {
+    const parsed = parseApiDate(value);
+    if (!parsed) return '';
+    const pad = (n: number) => String(n).padStart(2, '0');
+    return `${parsed.getFullYear()}-${pad(parsed.getMonth() + 1)}-${pad(parsed.getDate())}T${pad(parsed.getHours())}:${pad(parsed.getMinutes())}`;
+};
+
+/** <input type="datetime-local"> (local time) -> UTC ISO string for the API. */
+const localInputToApiDate = (value: string): string | null => {
+    if (!value) return null;
+    const parsed = new Date(value);
+    return Number.isNaN(parsed.getTime()) ? null : parsed.toISOString();
+};
+
+/** FastAPI answers 422 with detail = [{msg, loc, ...}]; rendering that array
+ *  directly crashes React and hides the real reason a save failed. */
+const errorText = (detail: unknown, fallback: string): string => {
+    if (typeof detail === 'string' && detail) return detail;
+    if (Array.isArray(detail)) {
+        const messages = detail
+            .map((item) => (item && typeof item.msg === 'string' ? item.msg : null))
+            .filter((msg): msg is string => !!msg);
+        if (messages.length > 0) return messages.join(', ');
+    }
+    return fallback;
+};
+
+const formatApiDate = (value?: string | null): string => {
+    const parsed = parseApiDate(value);
+    return parsed ? parsed.toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' }) : '';
+};
+
+/** Short label for the validity window, shown under the status badge. */
+const promoWindowLabel = (promo: PromoCode): { text: string; color: string } => {
+    const now = Date.now();
+    const from = parseApiDate(promo.valid_from);
+    const until = parseApiDate(promo.valid_until);
+    if (until && until.getTime() < now) return { text: `Expired ${formatApiDate(promo.valid_until)}`, color: '#B91C1C' };
+    if (from && from.getTime() > now) return { text: `Starts ${formatApiDate(promo.valid_from)}`, color: '#B45309' };
+    if (until) return { text: `Until ${formatApiDate(promo.valid_until)}`, color: '#6B7280' };
+    return { text: 'No expiry', color: '#9CA3AF' };
+};
+
+const PromoWindow = ({ promo }: { promo: PromoCode }) => {
+    const { text, color } = promoWindowLabel(promo);
+    return <div style={{ fontSize: '11px', marginTop: '6px', color }}>{text}</div>;
+};
+
 export default function PromosPage() {
     const [promos, setPromos] = useState<PromoCode[]>([]);
     const [loading, setLoading] = useState(true);
@@ -45,6 +122,12 @@ export default function PromosPage() {
     const [message, setMessage] = useState({ type: '', text: '' });
     const [partners, setPartners] = useState<Partner[]>([]);
 
+    // Usage History state
+    const [usageLogs, setUsageLogs] = useState<PromoUsage[]>([]);
+    const [isUsageModalOpen, setIsUsageModalOpen] = useState(false);
+    const [selectedPromoForLogs, setSelectedPromoForLogs] = useState<PromoCode | null>(null);
+    const [usageLoading, setUsageLoading] = useState(false);
+
     // Form state
     const [formData, setFormData] = useState({
         code: '',
@@ -53,6 +136,8 @@ export default function PromosPage() {
         min_order_value: '',
         max_discount: '',
         usage_limit: '',
+        valid_from: '',
+        valid_until: '',
         is_active: true,
         partner_id: ''
     });
@@ -65,6 +150,8 @@ export default function PromosPage() {
         min_order_value: '',
         max_discount: '',
         usage_limit: '1',
+        valid_from: '',
+        valid_until: '',
         is_active: true,
         partner_id: ''
     });
@@ -114,6 +201,8 @@ export default function PromosPage() {
                 min_order_value: promo.min_order_value ? promo.min_order_value.toString() : '',
                 max_discount: promo.max_discount ? promo.max_discount.toString() : '',
                 usage_limit: promo.usage_limit ? promo.usage_limit.toString() : '',
+                valid_from: apiDateToLocalInput(promo.valid_from),
+                valid_until: apiDateToLocalInput(promo.valid_until),
                 is_active: promo.is_active,
                 partner_id: promo.partner_id ? promo.partner_id.toString() : ''
             });
@@ -126,6 +215,8 @@ export default function PromosPage() {
                 min_order_value: '',
                 max_discount: '',
                 usage_limit: '',
+                valid_from: '',
+                valid_until: '',
                 is_active: true,
                 partner_id: ''
             });
@@ -142,6 +233,13 @@ export default function PromosPage() {
         e.preventDefault();
         setMessage({ type: '', text: '' });
 
+        const validFrom = localInputToApiDate(formData.valid_from);
+        const validUntil = localInputToApiDate(formData.valid_until);
+        if (validFrom && validUntil && new Date(validUntil) <= new Date(validFrom)) {
+            setMessage({ type: 'error', text: 'Valid until must be later than valid from.' });
+            return;
+        }
+
         try {
             const payload = {
                 code: formData.code.toUpperCase(),
@@ -150,6 +248,9 @@ export default function PromosPage() {
                 min_order_value: formData.min_order_value ? parseFloat(formData.min_order_value) : null,
                 max_discount: formData.max_discount ? parseFloat(formData.max_discount) : null,
                 usage_limit: formData.usage_limit ? parseInt(formData.usage_limit) : null,
+                // Empty date -> null: the code then never starts / never expires.
+                valid_from: validFrom,
+                valid_until: validUntil,
                 is_active: formData.is_active,
                 partner_id: formData.partner_id ? parseInt(formData.partner_id) : null
             };
@@ -166,8 +267,8 @@ export default function PromosPage() {
                 setIsModalOpen(false);
                 fetchPromos();
             } else {
-                const data = await res.json();
-                setMessage({ type: 'error', text: data.detail || 'Failed to save promo code' });
+                const data = await res.json().catch(() => ({}));
+                setMessage({ type: 'error', text: errorText(data.detail, 'Failed to save promo code') });
             }
         } catch (error) {
             setMessage({ type: 'error', text: 'An unexpected error occurred' });
@@ -191,15 +292,32 @@ export default function PromosPage() {
         e.preventDefault();
         setMessage({ type: '', text: '' });
 
+        const validFrom = localInputToApiDate(batchFormData.valid_from);
+        const validUntil = localInputToApiDate(batchFormData.valid_until);
+        if (validFrom && validUntil && new Date(validUntil) <= new Date(validFrom)) {
+            setMessage({ type: 'error', text: 'Valid until must be later than valid from.' });
+            return;
+        }
+
         try {
+            const prefix = batchFormData.prefix.toUpperCase();
             const payload = {
-                prefix: batchFormData.prefix.toUpperCase(),
+                // `code` is required by the API (PromoBatchCreate inherits
+                // PromoCodeCreate) but never used: the handler drops it
+                // (`exclude={"count", "prefix", "code"}`) and builds every code as
+                // `<PREFIX>-<6 random chars>`. Without it the request is 422.
+                // TODO(backend): split PromoBatchCreate off PromoCodeCreate so the
+                // batch payload stops carrying a dead required field.
+                code: prefix,
+                prefix,
                 count: parseInt(batchFormData.count),
                 discount_type: batchFormData.discount_type,
                 discount_value: parseFloat(batchFormData.discount_value),
                 min_order_value: batchFormData.min_order_value ? parseFloat(batchFormData.min_order_value) : null,
                 max_discount: batchFormData.max_discount ? parseFloat(batchFormData.max_discount) : null,
                 usage_limit: batchFormData.usage_limit ? parseInt(batchFormData.usage_limit) : null,
+                valid_from: validFrom,
+                valid_until: validUntil,
                 is_active: batchFormData.is_active,
                 partner_id: batchFormData.partner_id ? parseInt(batchFormData.partner_id) : null
             };
@@ -214,11 +332,29 @@ export default function PromosPage() {
                 fetchPromos();
                 setMessage({ type: 'success', text: `Successfully generated ${payload.count} promo codes.` });
             } else {
-                const data = await res.json();
-                setMessage({ type: 'error', text: data.detail || 'Failed to generate batch codes' });
+                const data = await res.json().catch(() => ({}));
+                setMessage({ type: 'error', text: errorText(data.detail, 'Failed to generate batch codes') });
             }
         } catch (error) {
             setMessage({ type: 'error', text: 'An unexpected error occurred' });
+        }
+    };
+
+    const fetchUsageLogs = async (promo: PromoCode | null = null) => {
+        setUsageLoading(true);
+        setSelectedPromoForLogs(promo);
+        setIsUsageModalOpen(true);
+        try {
+            const url = promo ? `/admin/promos/${promo.id}/usage` : '/admin/promos/usage';
+            const res = await apiFetch(url);
+            if (res.ok) {
+                const data = await res.json();
+                setUsageLogs(data);
+            }
+        } catch (error) {
+            console.error("Failed to fetch usage logs", error);
+        } finally {
+            setUsageLoading(false);
         }
     };
 
@@ -374,9 +510,17 @@ export default function PromosPage() {
                                         }}>
                                             {promo.is_active ? 'Active' : 'Inactive'}
                                         </span>
+                                        <PromoWindow promo={promo} />
                                     </td>
                                     <td style={{ padding: '16px 24px', textAlign: 'right' }}>
                                         <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
+                                            <button
+                                                onClick={() => fetchUsageLogs(promo)}
+                                                style={{ padding: '8px', background: 'transparent', border: '1px solid #E5E7EB', borderRadius: '8px', color: '#6366F1', cursor: 'pointer', transition: 'all 0.2s' }}
+                                                title="Usage History"
+                                            >
+                                                <History size={16} />
+                                            </button>
                                             <button
                                                 onClick={() => handleOpenModal(promo)}
                                                 style={{ padding: '8px', background: 'transparent', border: '1px solid #E5E7EB', borderRadius: '8px', color: '#4B5563', cursor: 'pointer', transition: 'all 0.2s' }}
@@ -470,7 +614,7 @@ export default function PromosPage() {
                                         <label style={{ display: 'block', fontSize: '14px', fontWeight: '600', color: '#374151', marginBottom: '8px' }}>Discount Type</label>
                                         <select
                                             value={formData.discount_type}
-                                            onChange={(e) => setFormData({ ...formData, discount_type: e.target.value as any })}
+                                            onChange={(e) => setFormData({ ...formData, discount_type: e.target.value })}
                                             style={{ width: '100%', padding: '12px', borderRadius: '8px', border: '1px solid #D1D5DB', background: 'white' }}
                                         >
                                             <option value="fixed">Fixed Amount (฿)</option>
@@ -531,6 +675,31 @@ export default function PromosPage() {
                                         style={{ width: '100%', padding: '12px', borderRadius: '8px', border: '1px solid #D1D5DB' }}
                                     />
                                 </div>
+
+                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                                    <div>
+                                        <label style={{ display: 'block', fontSize: '14px', fontWeight: '600', color: '#374151', marginBottom: '8px' }}>Valid From</label>
+                                        <input
+                                            type="datetime-local"
+                                            value={formData.valid_from}
+                                            onChange={(e) => setFormData({ ...formData, valid_from: e.target.value })}
+                                            style={{ width: '100%', padding: '12px', borderRadius: '8px', border: '1px solid #D1D5DB' }}
+                                        />
+                                        <p style={{ fontSize: '12px', color: '#6B7280', marginTop: '4px' }}>Empty = usable right away</p>
+                                    </div>
+                                    <div>
+                                        <label style={{ display: 'block', fontSize: '14px', fontWeight: '600', color: '#374151', marginBottom: '8px' }}>Valid Until</label>
+                                        <input
+                                            type="datetime-local"
+                                            value={formData.valid_until}
+                                            min={formData.valid_from || undefined}
+                                            onChange={(e) => setFormData({ ...formData, valid_until: e.target.value })}
+                                            style={{ width: '100%', padding: '12px', borderRadius: '8px', border: '1px solid #D1D5DB' }}
+                                        />
+                                        <p style={{ fontSize: '12px', color: '#6B7280', marginTop: '4px' }}>Empty = never expires</p>
+                                    </div>
+                                </div>
+                                <p style={{ fontSize: '12px', color: '#6B7280', marginTop: '4px' }}>Times are your local time and are sent to the API in UTC.</p>
 
                                 <div>
                                     <label style={{ display: 'block', fontSize: '14px', fontWeight: '600', color: '#374151', marginBottom: '8px' }}>Assign to Partner</label>
@@ -611,7 +780,7 @@ export default function PromosPage() {
                                         <label style={{ display: 'block', fontSize: '14px', fontWeight: '600', color: '#374151', marginBottom: '8px' }}>Discount Type</label>
                                         <select
                                             value={batchFormData.discount_type}
-                                            onChange={(e) => setBatchFormData({ ...batchFormData, discount_type: e.target.value as any })}
+                                            onChange={(e) => setBatchFormData({ ...batchFormData, discount_type: e.target.value })}
                                             style={{ width: '100%', padding: '12px', borderRadius: '8px', border: '1px solid #D1D5DB', background: 'white' }}
                                         >
                                             <option value="fixed">Fixed Amount (฿)</option>
@@ -645,6 +814,31 @@ export default function PromosPage() {
                                     />
                                 </div>
 
+                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                                    <div>
+                                        <label style={{ display: 'block', fontSize: '14px', fontWeight: '600', color: '#374151', marginBottom: '8px' }}>Valid From</label>
+                                        <input
+                                            type="datetime-local"
+                                            value={batchFormData.valid_from}
+                                            onChange={(e) => setBatchFormData({ ...batchFormData, valid_from: e.target.value })}
+                                            style={{ width: '100%', padding: '12px', borderRadius: '8px', border: '1px solid #D1D5DB' }}
+                                        />
+                                        <p style={{ fontSize: '12px', color: '#6B7280', marginTop: '4px' }}>Empty = usable right away</p>
+                                    </div>
+                                    <div>
+                                        <label style={{ display: 'block', fontSize: '14px', fontWeight: '600', color: '#374151', marginBottom: '8px' }}>Valid Until</label>
+                                        <input
+                                            type="datetime-local"
+                                            value={batchFormData.valid_until}
+                                            min={batchFormData.valid_from || undefined}
+                                            onChange={(e) => setBatchFormData({ ...batchFormData, valid_until: e.target.value })}
+                                            style={{ width: '100%', padding: '12px', borderRadius: '8px', border: '1px solid #D1D5DB' }}
+                                        />
+                                        <p style={{ fontSize: '12px', color: '#6B7280', marginTop: '4px' }}>Empty = never expires</p>
+                                    </div>
+                                </div>
+                                <p style={{ fontSize: '12px', color: '#6B7280', marginTop: '4px' }}>Times are your local time and are sent to the API in UTC.</p>
+
                                 <div>
                                     <label style={{ display: 'block', fontSize: '14px', fontWeight: '600', color: '#374151', marginBottom: '8px' }}>Assign to Partner</label>
                                     <select
@@ -676,6 +870,76 @@ export default function PromosPage() {
                                 </button>
                             </div>
                         </form>
+                    </div>
+                </div>
+            )}
+
+            {/* Usage History Modal */}
+            {isUsageModalOpen && (
+                <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999, backdropFilter: 'blur(4px)' }}>
+                    <div style={{ background: 'white', borderRadius: '16px', width: '100%', maxWidth: '700px', maxHeight: '80vh', boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+                        <div style={{ padding: '24px', borderBottom: '1px solid #E5E7EB', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <div>
+                                <h2 style={{ fontSize: '20px', fontWeight: '700', margin: 0 }}>Usage History</h2>
+                                <p style={{ fontSize: '14px', color: '#6B7280', margin: '4px 0 0 0' }}>
+                                    {selectedPromoForLogs ? `Code: ${selectedPromoForLogs.code}` : 'All Promo Codes'}
+                                </p>
+                            </div>
+                            <button onClick={() => setIsUsageModalOpen(false)} style={{ background: 'transparent', border: 'none', color: '#9CA3AF', cursor: 'pointer' }}>
+                                <X size={24} />
+                            </button>
+                        </div>
+
+                        <div style={{ padding: '24px', overflowY: 'auto', flex: 1 }}>
+                            {usageLoading ? (
+                                <div style={{ textAlign: 'center', padding: '40px' }}>Loading usage logs...</div>
+                            ) : usageLogs.length === 0 ? (
+                                <div style={{ textAlign: 'center', padding: '40px', color: '#6B7280' }}>
+                                    No usage data found for this code.
+                                </div>
+                            ) : (
+                                <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                                    <thead style={{ position: 'sticky', top: 0, background: 'white', zIndex: 10 }}>
+                                        <tr style={{ textAlign: 'left', fontSize: '12px', textTransform: 'uppercase', color: '#6B7280', borderBottom: '1px solid #E5E7EB' }}>
+                                            <th style={{ paddingBottom: '12px' }}>Customer</th>
+                                            <th style={{ paddingBottom: '12px' }}>Order ID</th>
+                                            <th style={{ paddingBottom: '12px' }}>Discount</th>
+                                            <th style={{ paddingBottom: '12px' }}>Date</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {usageLogs.map((log) => (
+                                            <tr key={log.id} style={{ borderBottom: '1px solid #F3F4F6' }}>
+                                                <td style={{ padding: '12px 0' }}>
+                                                    <div style={{ fontWeight: '500', fontSize: '14px' }}>{log.user?.full_name || `User ID: ${log.user_id}`}</div>
+                                                    <div style={{ fontSize: '12px', color: '#6B7280' }}>{log.user?.email}</div>
+                                                </td>
+                                                <td style={{ padding: '12px 0' }}>
+                                                    {log.order_id ? (
+                                                        <a href={`/orders?id=${log.order_id}`} style={{ color: '#3B82F6', textDecoration: 'none', fontWeight: '500' }}>#{log.order_id}</a>
+                                                    ) : '-'}
+                                                </td>
+                                                <td style={{ padding: '12px 0', fontWeight: '600', color: '#059669' }}>
+                                                    ฿{log.discount_amount}
+                                                </td>
+                                                <td style={{ padding: '12px 0', fontSize: '13px', color: '#6B7280' }}>
+                                                    {new Date(log.created_at).toLocaleString()}
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            )}
+                        </div>
+
+                        <div style={{ padding: '20px 24px', background: '#F9FAFB', borderTop: '1px solid #E5E7EB', display: 'flex', justifyContent: 'flex-end' }}>
+                            <button
+                                onClick={() => setIsUsageModalOpen(false)}
+                                style={{ padding: '10px 20px', background: 'white', border: '1px solid #D1D5DB', borderRadius: '8px', fontWeight: '600', color: '#374151', cursor: 'pointer' }}
+                            >
+                                Close
+                            </button>
+                        </div>
                     </div>
                 </div>
             )}

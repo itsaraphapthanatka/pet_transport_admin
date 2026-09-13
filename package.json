@@ -4,9 +4,10 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "node scripts/build.mjs",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "check:build-output": "node scripts/check-build-output.mjs"
   },
   "dependencies": {
     "@react-google-maps/api": "^2.20.8",

@@ -6,51 +6,57 @@ import Sidebar from './Sidebar';
 import Header from './Header';
 import { Loader2 } from 'lucide-react';
 
+const LOGIN_PATH = '/login';
+
+/**
+ * 'checking' until the effect has read localStorage once (the pages are static
+ * shells, so the token is unknown while prerendering and during hydration).
+ */
+type AuthState = 'checking' | 'authenticated' | 'anonymous';
+
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
     const pathname = usePathname();
     const router = useRouter();
-    const [authorized, setAuthorized] = useState(false);
-    const [loading, setLoading] = useState(true);
-    const [isRedirecting, setIsRedirecting] = useState(false);
+    const [authState, setAuthState] = useState<AuthState>('checking');
 
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
+    const isLoginPage = pathname === LOGIN_PATH;
+
+    // This component is mounted once by the root layout, so it must re-decide on
+    // every client-side navigation. The state is derived from (pathname, token)
+    // only - never from "am I already redirecting" - otherwise a redirect that
+    // is still in flight leaves the whole panel stuck on the spinner forever.
     useEffect(() => {
-        // Prevent redirect loop
-        if (isRedirecting) return;
-
         const token = localStorage.getItem('admin_token');
-        const isLoginPage = pathname === '/login';
+        const onLoginPage = pathname === LOGIN_PATH;
 
-        if (!token && !isLoginPage) {
-            setIsRedirecting(true);
-            router.push('/login');
-            return;
-        } else if (token && isLoginPage) {
-            setIsRedirecting(true);
-            router.push('/');
-            return;
-        } else {
-            setAuthorized(true);
+        if (!token && !onLoginPage) {
+            router.replace(LOGIN_PATH);
+        } else if (token && onLoginPage) {
+            router.replace('/');
         }
-        setLoading(false);
-    }, [pathname, router, isRedirecting]);
 
-    if (loading) {
-        return (
-            <div style={{ height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }} suppressHydrationWarning>
-                <Loader2 className="animate-spin" size={48} color="var(--primary)" />
-            </div>
-        );
-    }
+        // Always resolved, in every branch: the redirect only changes which
+        // pathname the next run of this effect sees.
+        setAuthState(token ? 'authenticated' : 'anonymous');
+    }, [pathname, router]);
 
-    const isLoginPage = pathname === '/login';
+    const spinner = (
+        <div style={{ height: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }} suppressHydrationWarning>
+            <Loader2 className="animate-spin" size={48} color="var(--primary)" />
+        </div>
+    );
+
+    if (authState === 'checking') return spinner;
 
     if (isLoginPage) {
-        return <>{children}</>;
+        // Signed in but sitting on /login: router.replace('/') is in flight.
+        return authState === 'authenticated' ? spinner : <>{children}</>;
     }
 
-    if (!authorized) return null;
+    // Signed out on a protected page: router.replace('/login') is in flight.
+    if (authState !== 'authenticated') return spinner;
 
     return (
         <div className="admin-layout">

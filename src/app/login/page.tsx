@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { PawPrint, Mail, Lock, Loader2, AlertCircle } from 'lucide-react';
+import { apiFetch } from '@/lib/api';
 
 export default function LoginPage() {
     const router = useRouter();
@@ -21,15 +22,22 @@ export default function LoginPage() {
             formData.append('username', email);
             formData.append('password', password);
 
-            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/admin/login`, {
+            // 'Content-Type': 'none' -> let the browser set the multipart boundary
+            // for FormData (the endpoint is an OAuth2PasswordRequestForm).
+            // skipAuthRedirect -> a wrong password also answers 401; without it
+            // apiFetch would reload /login and wipe the error message below.
+            const response = await apiFetch('/auth/admin/login', {
                 method: 'POST',
                 body: formData,
+                headers: { 'Content-Type': 'none' },
+                skipAuthRedirect: true,
             });
 
             const data = await response.json();
 
             if (!response.ok) {
-                throw new Error(data.detail || 'Login failed');
+                // FastAPI answers 422 with detail = [{msg, loc, ...}], not a string.
+                throw new Error(typeof data?.detail === 'string' ? data.detail : 'Login failed');
             }
 
             if (!['admin', 'super_admin', 'moderator'].includes(data.role)) {
@@ -57,8 +65,8 @@ export default function LoginPage() {
 
             // Only redirect if token is verified
             router.push('/');
-        } catch (err: any) {
-            setError(err.message);
+        } catch (err: unknown) {
+            setError(err instanceof Error ? err.message : 'Login failed');
         } finally {
             setLoading(false);
         }
